@@ -345,19 +345,7 @@ def remove_three_strands_in_sphere(dna, point, sphere_radius):
 
 
 def export_dna_structures(new_dna_structures, base_path):
-    """
-    Exports new DNA structures to unique subdirectories and collects their output paths.
     
-    Parameters:
-    new_dna_structures : List[DNAStructure]
-        List of new DNA structure objects to be saved.
-    base_path : str
-        The base directory path where the structures will be saved.
-    
-    Returns:
-    List[dict]
-        List of dictionaries containing structure ID and file paths.
-    """
     output_paths = []
     
     for i, new_dna in enumerate(new_dna_structures):
