@@ -1,0 +1,45 @@
+           0  -0.600244   0.000  0.000  0.000  
+         100  -1.534232   0.056  0.596  0.000  
+         200  -1.515276   0.060  0.599  0.000  
+         300  -1.515532   0.062  0.602  0.000  
+         400  -1.516156   0.064  0.603  0.000  
+         500  -1.504826   0.065  0.605  0.000  
+         600  -1.504254   0.065  0.606  0.000  
+         700  -1.494423   0.066  0.606  0.000  
+         800  -1.501217   0.066  0.607  0.000  
+         900  -1.503553   0.067  0.607  0.000  
+        1000  -1.504905   0.067  0.607  0.000  
+INFO: seeding the RNG with 582953436
+INFO: Initializing backend 
+
+WARNING: The 'backend_precision' option cannot be set by input file when running on CPU
+
+INFO: Simulation type: MC
+INFO: The generator will try to take into account bonded interactions by choosing distances between bonded neighbours no larger than 2.000000
+INFO: Converting temperature from Celsius (30.000000 C°) to simulation units (0.101050)
+INFO: Using a maximum backbone force of 200  (the corresponding mbf_xmax is 0.24505) and a far value of 200
+INFO: Running Debye-Huckel at salt concentration =  1
+INFO: Using different widths for major and minor grooves
+INFO: Temperature change detected (new temperature: 30.00 C, 303.15 K), re-initialising the DNA interaction
+DEBUG: Debye-Huckel parameters: Q=0.054300, lambda_0=0.361646, lambda=0.363539, r_high=1.090618, cutoff=2.598724
+DEBUG: Debye-Huckel parameters: debye_huckel_RC=1.635926e+00, debye_huckel_B=8.336024e-03
+INFO: The Debye length at this temperature and salt concentration is 0.363539
+INFO: Setting the maximum IO limit to 5 MB/s
+INFO: pid: 354087
+DEBUG: Debye-Huckel parameters: Q=0.054300, lambda_0=0.361646, lambda=0.363539, r_high=1.090618, cutoff=2.598724
+DEBUG: Debye-Huckel parameters: debye_huckel_RC=1.635926e+00, debye_huckel_B=8.336024e-03
+INFO: The Debye length at this temperature and salt concentration is 0.363539
+INFO: (Cells.cpp) N_cells_side: 19, 19, 19; rcut=3.59872, IS_MC: 1
+INFO: N: 3012, N molecules: 47
+
+INFO: Total Running Time: 54.0073 s, per step: 54.0073 ms
+INFO: Timings, in seconds, by Timer (total, own, spent in children)
+> SimBackend                         54.007 (100.0%)        2.626 (  4.9%)       51.382 ( 95.1%)
+***> Rotations+Translations          50.311 ( 93.2%)       50.311 ( 93.2%)        0.000 (  0.0%)
+***> Observables                      1.071 (  2.0%)        1.071 (  2.0%)        0.000 (  0.0%)
+> Lists                               0.371 (  0.7%)        0.371 (  0.7%)        0.000 (  0.0%)
+
+
+Please cite at least the following publication for any work that uses the oxDNA simulation package
+  * E. Poppleton et al., J. Open Source Softw. 8, 4693 (2023), DOI: 10.21105/joss.04693
+Run time: 56.13744697603397

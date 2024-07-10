@@ -1,15 +1,15 @@
-           0  -0.569540   0.000  0.000  0.000  
-         100  -1.531854   0.057  0.594  0.000  
-         200  -1.526633   0.061  0.599  0.000  
-         300  -1.516902   0.062  0.601  0.000  
-         400  -1.516404   0.063  0.602  0.000  
-         500  -1.516489   0.063  0.603  0.000  
-         600  -1.511079   0.064  0.604  0.000  
-         700  -1.509029   0.065  0.604  0.000  
-         800  -1.504992   0.065  0.605  0.000  
-         900  -1.507614   0.065  0.605  0.000  
-        1000  -1.513600   0.065  0.605  0.000  
-INFO: seeding the RNG with 221780543
+           0  -0.610058   0.000  0.000  0.000  
+         100  -1.530011   0.056  0.599  0.000  
+         200  -1.515849   0.060  0.601  0.000  
+         300  -1.510383   0.062  0.603  0.000  
+         400  -1.505156   0.064  0.604  0.000  
+         500  -1.501822   0.065  0.605  0.000  
+         600  -1.503893   0.065  0.606  0.000  
+         700  -1.501876   0.066  0.606  0.000  
+         800  -1.501720   0.066  0.607  0.000  
+         900  -1.500714   0.066  0.607  0.000  
+        1000  -1.497116   0.067  0.608  0.000  
+INFO: seeding the RNG with 1432697524
 INFO: Initializing backend 
 
 WARNING: The 'backend_precision' option cannot be set by input file when running on CPU
@@ -25,21 +25,21 @@ DEBUG: Debye-Huckel parameters: Q=0.054300, lambda_0=0.361646, lambda=0.363539, 
 DEBUG: Debye-Huckel parameters: debye_huckel_RC=1.635926e+00, debye_huckel_B=8.336024e-03
 INFO: The Debye length at this temperature and salt concentration is 0.363539
 INFO: Setting the maximum IO limit to 5 MB/s
-INFO: pid: 112698
+INFO: pid: 354026
 DEBUG: Debye-Huckel parameters: Q=0.054300, lambda_0=0.361646, lambda=0.363539, r_high=1.090618, cutoff=2.598724
 DEBUG: Debye-Huckel parameters: debye_huckel_RC=1.635926e+00, debye_huckel_B=8.336024e-03
 INFO: The Debye length at this temperature and salt concentration is 0.363539
 INFO: (Cells.cpp) N_cells_side: 19, 19, 19; rcut=3.59872, IS_MC: 1
-INFO: N: 3047, N molecules: 48
+INFO: N: 2998, N molecules: 47
 
-INFO: Total Running Time: 31.1945 s, per step: 31.1945 ms
+INFO: Total Running Time: 48.7851 s, per step: 48.7851 ms
 INFO: Timings, in seconds, by Timer (total, own, spent in children)
-> SimBackend                         31.195 (100.0%)        2.076 (  6.7%)       29.118 ( 93.3%)
-***> Rotations+Translations          28.496 ( 91.4%)       28.496 ( 91.4%)        0.000 (  0.0%)
-***> Observables                      0.622 (  2.0%)        0.622 (  2.0%)        0.000 (  0.0%)
-> Lists                               0.199 (  0.6%)        0.199 (  0.6%)        0.000 (  0.0%)
+> SimBackend                         48.785 (100.0%)        2.507 (  5.1%)       46.278 ( 94.9%)
+***> Rotations+Translations          45.346 ( 93.0%)       45.346 ( 93.0%)        0.000 (  0.0%)
+***> Observables                      0.932 (  1.9%)        0.932 (  1.9%)        0.000 (  0.0%)
+> Lists                               0.281 (  0.6%)        0.281 (  0.6%)        0.000 (  0.0%)
 
 
 Please cite at least the following publication for any work that uses the oxDNA simulation package
   * E. Poppleton et al., J. Open Source Softw. 8, 4693 (2023), DOI: 10.21105/joss.04693
-Run time: 32.314457850996405
+Run time: 50.54365745000541
