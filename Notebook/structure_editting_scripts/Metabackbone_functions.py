@@ -1,26 +1,19 @@
-# dna_analysis.py
-
-import os
-import random
-import numpy as np
-from pathlib import Path
 from itertools import combinations
+import numpy as np
 import sys
 from oxDNA_analysis_tools.UTILS.oxview import oxdna_conf, from_path
 from oxDNA_analysis_tools.UTILS.RyeReader import describe, get_confs, inbox
 from oxDNA_analysis_tools.UTILS.data_structures import TopInfo, TrajInfo
 from pathlib import Path
+import os
 from ipy_oxdna.dna_structure import DNAStructure, DNAStructureStrand, load_dna_structure, DNABase, strand_from_info
 from copy import deepcopy
 from ipy_oxdna.oxdna_simulation import Simulation, SimulationManager
-import copy
-from tqdm.auto import tqdm
-from ipy_oxdna.oxdna_simulation import Simulation, SimulationManager
+import random
 
-
-def load_dna_structure_files(base_path):
-    dat_path = os.path.join(base_path, '1512_bp.dat')
-    top_path = os.path.join(base_path, '1512_bp.top')
+def load_dna_structure_files(input_path):
+    dat_path = os.path.join(input_path, '1512_bp.dat')
+    top_path = os.path.join(input_path, '1512_bp.top')
     dna = load_dna_structure(top_path, dat_path)
     return dna
 
@@ -55,23 +48,27 @@ def find_cross_over_in_longest_strand(longest_strand):
 def calculate_left_right_pos(dna, left_indices, right_indices):
     left_pos = []
     right_pos = []
+
     for strand in dna.strands:
         for base in strand:
             if base.uid in left_indices:
                 left_pos.append(base.pos)
-    for strand in dna.strands:
-        for base in strand:
-            if base.uid in right_indices:
+            elif base.uid in right_indices:
                 right_pos.append(base.pos)
+
     if left_pos:
         cms_left_side = np.mean(left_pos, axis=0)
     else:
         raise ValueError("No positions found for left indices.")
+
     if right_pos:
         cms_right_side = np.mean(right_pos, axis=0)
     else:
         raise ValueError("No positions found for right indices.")
-    return cms_left_side, cms_right_side
+
+    midpoint = (cms_left_side + cms_right_side) / 2
+
+    return cms_left_side, cms_right_side, midpoint
 
 def is_point_far_from_crossovers(point, crossover_positions, min_distance_threshold):
     for pos in crossover_positions:
@@ -80,14 +77,17 @@ def is_point_far_from_crossovers(point, crossover_positions, min_distance_thresh
             return False
     return True
 
-def find_valid_point(dna, left_indices, right_indices, longest_strand, min_distance_threshold=3):
-    cms_left_side, cms_right_side = calculate_left_right_pos(dna, left_indices, right_indices)
+def find_valid_point(dna, left_indices, right_indices, longest_strand, min_distance_threshold=4):
+    cms_left_side, cms_right_side, midpoint = calculate_left_right_pos(dna, left_indices, right_indices)
+
     cross_over_bases, max_index_difference, min_distance = find_cross_over_in_longest_strand(longest_strand)
     crossover_positions = [base.pos for base in cross_over_bases if base is not None]
+
     t = random.uniform(0, 1)
     first_P = np.array(cms_left_side + t * (cms_right_side - cms_left_side))
     if not crossover_positions:
         return first_P
+
     while True:
         t = random.uniform(0, 1)
         P = np.array(cms_left_side + t * (cms_right_side - cms_left_side))
@@ -97,15 +97,38 @@ def find_valid_point(dna, left_indices, right_indices, longest_strand, min_dista
 def find_bases_around_point(dna, point, min_distance, max_distance):
     left_bases = []
     right_bases = []
-    for strand in dna.strands:
-        for base in strand:
+    left_base_indices = []
+    left_strand_indices = []
+    right_base_indices = []
+    right_strand_indices = []
+
+    for strand_index, strand in enumerate(dna.strands):
+        for base_index, base in enumerate(strand):
             distance = np.linalg.norm(np.array(base.pos) - np.array(point))
             if min_distance < distance < max_distance:
                 if base.pos[0] < point[0]:
                     left_bases.append(base.pos)
+                    left_base_indices.append(base_index)
+                    left_strand_indices.append(strand_index)
                 else:
                     right_bases.append(base.pos)
-    return left_bases, right_bases
+                    right_base_indices.append(base_index)
+                    right_strand_indices.append(strand_index)
+
+    if left_bases:
+        cms_left_bases = np.mean(left_bases, axis=0)
+    else:
+        cms_left_bases = None
+
+    if right_bases:
+        cms_right_bases = np.mean(right_bases, axis=0)
+    else:
+        cms_right_bases = None
+
+    return (left_bases, right_bases, 
+            cms_left_bases, cms_right_bases, 
+            left_base_indices, right_base_indices, 
+            left_strand_indices, right_strand_indices)
 
 def calculate_center_of_mass(positions):
     if not positions:
@@ -121,9 +144,12 @@ def calculate_bend_angle(P, cms_left, cms_right):
     angle = np.arccos(dot_product) * (180.0 / np.pi)
     return angle
 
-def find_bend_angle(dna, left_indices, right_indices, longest_strand, min_distance_threshold=2.0, min_distance=5.0, max_distance=10.0):
+def find_bend_angle(dna, left_indices, right_indices, longest_strand, min_distance_threshold=5.0, min_distance=7.0, max_distance=20.0):
     point_pos = find_valid_point(dna, left_indices, right_indices, longest_strand, min_distance_threshold)
-    left_bases, right_bases = find_bases_around_point(dna, point_pos, min_distance, max_distance)
+    (left_bases, right_bases, 
+    cms_left_bases, cms_right_bases, 
+    left_base_indices, right_base_indices, 
+    left_strand_indices, right_strand_indices) = find_bases_around_point(dna, point_pos, min_distance, max_distance)
     cms_left = calculate_center_of_mass(left_bases)
     cms_right = calculate_center_of_mass(right_bases)
     bend_angle = calculate_bend_angle(point_pos, cms_left, cms_right)
@@ -179,9 +205,60 @@ def remove_one_strand_in_sphere(dna, point, sphere_radius):
         dna_structures.append(new_dna_structure)
     return dna_structures
 
-def queue_relaxation_simulations(structures, base_path, sim_base_path):
-    rel_steps = 1e3
-    rel_parameters = {'steps': f'{rel_steps}', 'max_backbone_force': '200', 'max_backbone_force_far': '200'}
+def remove_two_strands_in_sphere(dna, point, sphere_radius):
+    bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, sphere_radius)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    
+    dna_structures = []
+    removed_strands_info = []
+
+    # Create all possible pairs of strands to remove
+    strand_pairs = [(strand_1, strand_2) for i, strand_1 in enumerate(strands_to_remove)
+                    for strand_2 in list(strands_to_remove)[i + 1:]]
+
+    for strand_1, strand_2 in strand_pairs:
+        strand_list = []
+        for idx, strand in enumerate(dna.strands):
+            if idx not in {strand_1, strand_2}:
+                strand_list.append(strand)
+        
+        new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+        dna_structures.append(new_dna_structure)
+        
+        removed_strands_info.append((strand_1, strand_2))
+    
+    return dna_structures, removed_strands_info
+
+def remove_three_strands_in_sphere(dna, point, sphere_radius):
+    bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, sphere_radius)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    
+    dna_structures = []
+    removed_strands_info = []
+
+    # Create all possible triplets of strands to remove
+    strand_triplets = [(strand_1, strand_2, strand_3) for i, strand_1 in enumerate(strands_to_remove)
+                       for j, strand_2 in enumerate(list(strands_to_remove)[i + 1:])
+                       for strand_3 in list(strands_to_remove)[i + j + 2:]]
+
+    for strand_1, strand_2, strand_3 in strand_triplets:
+        strand_list = []
+        for idx, strand in enumerate(dna.strands):
+            if idx not in {strand_1, strand_2, strand_3}:
+                strand_list.append(strand)
+        
+        new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+        dna_structures.append(new_dna_structure)
+        
+        removed_strands_info.append((strand_1, strand_2, strand_3))
+    
+    return dna_structures, removed_strands_info
+
+def queue_relaxation_simulations(structures, base_path, sim_base_path, rel_parameters):
     simulation_manager = SimulationManager()
     sim_list_rel = []
     for structure_id, structure in enumerate(structures):
@@ -202,10 +279,7 @@ def queue_relaxation_simulations(structures, base_path, sim_base_path):
     print("Completed all relaxation simulations")
     return sim_list_rel
 
-def queue_equilibration_simulations(structures, base_path, sim_base_path):
-    eq_steps = 1e5
-    eq_parameters = {'dt':f'0.003','steps':f'{eq_steps}','print_energy_every': f'1e5', 'interaction_type': 'DNA2',
-                 'print_conf_interval':f'1e5', 'fix_diffusion':'false', 'T':f'20C','max_density_multiplier':f'50'}
+def queue_equilibration_simulations(structures, base_path, sim_base_path, eq_parameters):
     simulation_manager = SimulationManager()
     sim_list_eq = []
     for structure_id, structure in enumerate(structures):
@@ -225,10 +299,7 @@ def queue_equilibration_simulations(structures, base_path, sim_base_path):
     print("Completed all equilibration simulations")
     return sim_list_eq
 
-def queue_production_simulations(structures, base_path, sim_base_path):
-    prod_steps = 1e5
-    prod_parameters = {'dt':f'0.003','steps':f'{prod_steps}','print_energy_every': f'1e5', 'interaction_type': 'DNA2',
-                   'print_conf_interval':f'1e5', 'fix_diffusion':'false', 'T':f'20C','max_density_multiplier':f'50'}
+def queue_production_simulations(structures, base_path, sim_base_path, prod_parameters):
     simulation_manager = SimulationManager()
     sim_list_prod = []
     for structure_id, structure in enumerate(structures):
@@ -248,35 +319,12 @@ def queue_production_simulations(structures, base_path, sim_base_path):
     print("Completed all production simulations")
     return sim_list_prod
 
-def run_all_simulations(structures, base_path, sim_base_path):
+def run_all_simulations(structures, base_path, sim_base_path, rel_parameters, eq_parameters, prod_parameters):
     print("Starting relaxation simulations...")
-    sim_list_rel = queue_relaxation_simulations(structures, base_path, sim_base_path)
+    sim_list_rel = queue_relaxation_simulations(structures, base_path, sim_base_path, rel_parameters)
     print("Starting equilibration simulations...")
-    sim_list_eq = queue_equilibration_simulations(structures, base_path, sim_base_path)
+    sim_list_eq = queue_equilibration_simulations(structures, base_path, sim_base_path, eq_parameters)
     print("Starting production simulations...")
-    sim_list_prod = queue_production_simulations(structures, base_path, sim_base_path)
+    sim_list_prod = queue_production_simulations(structures, base_path, sim_base_path, prod_parameters)
     return sim_list_rel, sim_list_eq, sim_list_prod
 
-def main(base_path, sim_base_path, left_indices, right_indices, target_angle=90, tolerance=5):
-    initial_dna = load_dna_structure_files(base_path)
-    modified_structures = [initial_dna]
-    results = []
-    sphere_radius = 3.5  # Define your sphere radius
-    while True:
-        new_structures = []
-        for dna in modified_structures:
-            P = find_valid_point(dna, left_indices, right_indices, find_longest_strand(dna)[0])
-            new_dna_structures = remove_one_strand_in_sphere(dna, P, sphere_radius)
-            new_structures.extend(new_dna_structures)
-        if not new_structures:
-            break
-        output_paths = export_dna_structures(new_structures, base_path)
-        sim_list_rel, sim_list_eq, sim_list_prod = run_all_simulations(new_structures, base_path, sim_base_path)
-        for dna in new_structures:
-            point_pos, bend_angle = find_bend_angle(dna, left_indices, right_indices, find_longest_strand(dna)[0])
-            results.append((point_pos, bend_angle))
-            if abs(bend_angle - target_angle) <= tolerance:
-                print(f"Achieved target bend angle: {bend_angle} at point {point_pos}")
-                return results
-        modified_structures = new_structures
-    return results
