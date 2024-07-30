@@ -225,6 +225,28 @@ def find_bases_below_point_in_sphere(dna, point, sphere_radius, min_distance=0):
                 base_to_strand_mapping[base.uid] = strand_index
     return below_bases, base_to_strand_mapping
 
+
+# Removing all the staples in the sphere
+def remove_all_staples_in_sphere_except_longest(dna, point, sphere_radius):
+    bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, sphere_radius)
+
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    print("Bases in sphere:", bases_in_sphere)
+    print("Base to strand mapping:", base_to_strand_mapping)
+    print("Longest strand:", longest_strand)
+    print("Longest strand index:", longest_strand_index)
+    
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    print("Strands to remove:", strands_to_remove)
+
+    new_strands = [strand for idx, strand in enumerate(dna.strands) if idx not in strands_to_remove]
+    new_dna_structure = DNAStructure(new_strands, dna.time, dna.box, dna.energy)
+    
+    print(f"Total number of strands removed: {len(strands_to_remove)}")
+    return new_dna_structure, list(strands_to_remove)
+
+
 # Removing one strand above point in sphere
 def remove_one_strand_above_point_in_sphere(dna, point, sphere_radius, min_distance=0):
     bases_above, base_to_strand_mapping = find_bases_above_point_in_sphere(dna, point, sphere_radius, min_distance)
