@@ -13,12 +13,14 @@ import copy
 from tqdm.auto import tqdm
 import random
 
+# Loading DNA structure files
 def load_dna_structure_files(input_path):
     dat_path = os.path.join(input_path, '1512_bp.dat')
     top_path = os.path.join(input_path, '1512_bp.top')
     dna = load_dna_structure(top_path, dat_path)
     return dna
 
+# Finding the longest strand in the DNA structure
 def find_longest_strand(dna):
     longest_strand = None
     longest_strand_index = -1
@@ -30,6 +32,7 @@ def find_longest_strand(dna):
             longest_strand_index = index
     return longest_strand, longest_strand_index
 
+# Finding cross-over in the longest strand
 def find_cross_over_in_longest_strand(longest_strand):
     min_distance = float('inf')
     max_index_difference = 0
@@ -47,6 +50,7 @@ def find_cross_over_in_longest_strand(longest_strand):
                 cross_over_bases_max = (base_i, base_j)
     return cross_over_bases_max, max_index_difference, min_distance
 
+# Calculating positions
 def calculate_left_right_pos(dna, left_indices, right_indices):
     left_pos = []
     right_pos = []
@@ -78,6 +82,7 @@ def calculate_left_right_pos(dna, left_indices, right_indices):
     
     return cms_left_side, cms_right_side, midpoint
 
+# Check if point is far from crossovers
 def is_point_far_from_crossovers(point, crossover_positions, min_distance_threshold):
     for pos in crossover_positions:
         distance = np.linalg.norm(np.array(point) - np.array(pos))
@@ -85,6 +90,7 @@ def is_point_far_from_crossovers(point, crossover_positions, min_distance_thresh
             return False
     return True
 
+# Finding valid point
 def find_valid_point(dna, left_indices, right_indices, longest_strand, min_distance_threshold = 2.5):
     cms_left_side, cms_right_side, midpoint = calculate_left_right_pos(dna, left_indices, right_indices)
     
@@ -102,6 +108,7 @@ def find_valid_point(dna, left_indices, right_indices, longest_strand, min_dista
         if is_point_far_from_crossovers(P, crossover_positions, min_distance_threshold):
             return P
 
+# Finding bases around a point
 def find_bases_around_point(dna, point, min_distance, max_distance):
     left_bases = []
     right_bases = []
@@ -114,7 +121,7 @@ def find_bases_around_point(dna, point, min_distance, max_distance):
         for base_index, base in enumerate(strand):
             distance = np.linalg.norm(np.array(base.pos) - np.array(point))
             if min_distance < distance < max_distance:
-                if base.pos[0] < point[0]:    # the x-coordinate of the base
+                if base.pos[0] < point[0]:
                     left_bases.append(base.pos)
                     left_base_indices.append(base_index)
                     left_strand_indices.append(strand_index)
@@ -142,11 +149,13 @@ def find_bases_around_point(dna, point, min_distance, max_distance):
             left_base_indices, right_base_indices, 
             left_strand_indices, right_strand_indices)
 
+# Calculating center of mass
 def calculate_center_of_mass(positions):
     if not positions:
         raise ValueError("No positions provided for center of mass calculation.")
     return np.mean(positions, axis=0)
 
+# Calculating bend angle
 def calculate_bend_angle(P, cms_left, cms_right):
     vec_left = cms_left - P
     vec_right = cms_right - P
@@ -156,6 +165,7 @@ def calculate_bend_angle(P, cms_left, cms_right):
     angle = np.arccos(dot_product) * (180.0 / np.pi)
     return angle
 
+# Finding bend angle
 def find_bend_angle(dna, left_indices, right_indices, longest_strand, min_distance_threshold = 2.5, min_distance = 7.0, max_distance = 20.0):
     point_pos = find_valid_point(dna, left_indices, right_indices, longest_strand, min_distance_threshold)
     (left_bases, right_bases, 
@@ -167,6 +177,7 @@ def find_bend_angle(dna, left_indices, right_indices, longest_strand, min_distan
     bend_angle = calculate_bend_angle(point_pos, cms_left, cms_right)
     return point_pos, bend_angle
 
+# Calculating angles for all structures
 def calculate_angles_for_all_structures(dna_list, left_indices, right_indices, min_distance_threshold = 2.5, min_distance = 7.0, max_distance = 20.0):
     angles = []
     for dna in dna_list:
@@ -175,6 +186,7 @@ def calculate_angles_for_all_structures(dna_list, left_indices, right_indices, m
         angles.append((point_pos, bend_angle))
     return angles
 
+# Finding bases in sphere
 def find_bases_in_sphere(dna, point, sphere_radius):
     bases_in_sphere = []
     base_to_strand_mapping = {}
@@ -187,6 +199,7 @@ def find_bases_in_sphere(dna, point, sphere_radius):
                 base_to_strand_mapping[base.uid] = strand_index
     return bases_in_sphere, base_to_strand_mapping
 
+# Finding bases above point in sphere
 def find_bases_above_point_in_sphere(dna, point, sphere_radius, min_distance=0):
     above_bases = []
     base_to_strand_mapping = {}
@@ -194,12 +207,12 @@ def find_bases_above_point_in_sphere(dna, point, sphere_radius, min_distance=0):
         for base in strand:
             base_position = np.array(base.pos)
             distance = np.linalg.norm(base_position - point)
-            if min_distance < distance < sphere_radius and base_position[1] > point[1]:  # Above the point and within the sphere
+            if min_distance < distance < sphere_radius and base_position[1] > point[1]:
                 above_bases.append(base.uid)
                 base_to_strand_mapping[base.uid] = strand_index
     return above_bases, base_to_strand_mapping
 
-
+# Finding bases below point in sphere
 def find_bases_below_point_in_sphere(dna, point, sphere_radius, min_distance=0):
     below_bases = []
     base_to_strand_mapping = {}
@@ -207,12 +220,335 @@ def find_bases_below_point_in_sphere(dna, point, sphere_radius, min_distance=0):
         for base in strand:
             base_position = np.array(base.pos)
             distance = np.linalg.norm(base_position - point)
-            if min_distance < distance < sphere_radius and base_position[1] < point[1]:  # Below the point and within the sphere
+            if min_distance < distance < sphere_radius and base_position[1] < point[1]:
                 below_bases.append(base.uid)
                 base_to_strand_mapping[base.uid] = strand_index
     return below_bases, base_to_strand_mapping
 
+# Removing one strand above point in sphere
+def remove_one_strand_above_point_in_sphere(dna, point, sphere_radius, min_distance=0):
+    bases_above, base_to_strand_mapping = find_bases_above_point_in_sphere(dna, point, sphere_radius, min_distance)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    strands_above = list(set(base_to_strand_mapping.values()))
+    print("Strand indices above the point and within the sphere:", strands_above)
+    print("Strand indices to be removed:", list(strands_to_remove))
+    
+    dna_structures = []
+    for strand_index in strands_to_remove:
+        print(f"Removing strand index: {strand_index}")
+        strand_list = []
+        for idx, strand in enumerate(dna.strands):
+            if idx != strand_index:
+                strand_list.append(strand)
+        new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+        dna_structures.append(new_dna_structure)
+    
+    print(f"Total number of new structures created: {len(dna_structures)}")
+    return dna_structures
 
+# Removing one strand below point in sphere
+def remove_one_strand_below_point_in_sphere(dna, point, sphere_radius, min_distance=0):
+    bases_below, base_to_strand_mapping = find_bases_below_point_in_sphere(dna, point, sphere_radius, min_distance)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    strands_below = list(set(base_to_strand_mapping.values()))
+    print("Strand indices below the point and within the sphere:", strands_below)
+    print("Strand indices to be removed:", list(strands_to_remove))
+    
+    dna_structures = []
+    for strand_index in strands_to_remove:
+        print(f"Removing strand index: {strand_index}")
+        strand_list = []
+        for idx, strand in enumerate(dna.strands):
+            if idx != strand_index:
+                strand_list.append(strand)
+        new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+        dna_structures.append(new_dna_structure)
+    
+    print(f"Total number of new structures created: {len(dna_structures)}")
+    return dna_structures
+
+# Removing one strand in sphere
+def remove_one_strand_in_sphere(dna, point, sphere_radius):
+    bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, sphere_radius)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    strands_in_sphere = list(set(base_to_strand_mapping.values()))
+    print("Strand indices in the sphere:", strands_in_sphere)
+    print("Strand indices to be removed:", list(strands_to_remove))
+    dna_structures = []
+    for strand_index in strands_to_remove:
+        print(f"Removing strand index: {strand_index}")
+        strand_list = []
+        for idx, strand in enumerate(dna.strands):
+            if idx != strand_index:
+                strand_list.append(strand)
+        new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+        dna_structures.append(new_dna_structure)
+    print(f"Total number of new structures created: {len(dna_structures)}")
+    return dna_structures
+
+# Removing two strands above point in sphere
+def remove_two_strands_above_point_in_sphere(dna, point, sphere_radius, min_distance=0):
+    bases_above, base_to_strand_mapping = find_bases_above_point_in_sphere(dna, point, sphere_radius, min_distance)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    print("Bases above the point in sphere:", bases_above)
+    print("Base to strand mapping:", base_to_strand_mapping)
+    print("Longest strand:", longest_strand)
+    print("Longest strand index:", longest_strand_index)
+    
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    print("Strands to remove:", strands_to_remove)
+
+    dna_structures = []
+    removed_strands_info = []
+
+    # Create all possible pairs of strands to remove
+    strand_pairs = [(strand_1, strand_2) for i, strand_1 in enumerate(strands_to_remove)
+                    for strand_2 in list(strands_to_remove)[i + 1:]]
+
+    for strand_1, strand_2 in strand_pairs:
+        strand_list = []
+        for idx, strand in enumerate(dna.strands):
+            if idx not in {strand_1, strand_2}:
+                strand_list.append(strand)
+        
+        new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+        dna_structures.append(new_dna_structure)
+        
+        removed_strands_info.append((strand_1, strand_2))
+        print(f"Removed strands: {strand_1}, {strand_2}")
+    
+    return dna_structures, removed_strands_info
+
+# Removing two strands below point in sphere
+def remove_two_strands_below_point_in_sphere(dna, point, sphere_radius, min_distance=0):
+    bases_below, base_to_strand_mapping = find_bases_below_point_in_sphere(dna, point, sphere_radius, min_distance)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    print("Bases below the point in sphere:", bases_below)
+    print("Base to strand mapping:", base_to_strand_mapping)
+    print("Longest strand:", longest_strand)
+    print("Longest strand index:", longest_strand_index)
+    
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    print("Strands to remove:", strands_to_remove)
+
+    dna_structures = []
+    removed_strands_info = []
+
+    # Create all possible pairs of strands to remove
+    strand_pairs = [(strand_1, strand_2) for i, strand_1 in enumerate(strands_to_remove)
+                    for strand_2 in list(strands_to_remove)[i + 1:]]
+
+    for strand_1, strand_2 in strand_pairs:
+        strand_list = []
+        for idx, strand in enumerate(dna.strands):
+            if idx not in {strand_1, strand_2}:
+                strand_list.append(strand)
+        
+        new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+        dna_structures.append(new_dna_structure)
+        
+        removed_strands_info.append((strand_1, strand_2))
+        print(f"Removed strands: {strand_1}, {strand_2}")
+    
+    return dna_structures, removed_strands_info
+
+# Removing two strands in sphere
+def remove_two_strands_in_sphere(dna, point, sphere_radius):
+    bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, sphere_radius)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    print("Bases in sphere:", bases_in_sphere)
+    print("Base to strand mapping:", base_to_strand_mapping)
+    print("Longest strand:", longest_strand)
+    print("Longest strand index:", longest_strand_index)
+    
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    print("Strands to remove:", strands_to_remove)
+
+    dna_structures = []
+    removed_strands_info = []
+
+    # Create all possible pairs of strands to remove
+    strand_pairs = [(strand_1, strand_2) for i, strand_1 in enumerate(strands_to_remove)
+                    for strand_2 in list(strands_to_remove)[i + 1:]]
+
+    for strand_1, strand_2 in strand_pairs:
+        strand_list = []
+        for idx, strand in enumerate(dna.strands):
+            if idx not in {strand_1, strand_2}:
+                strand_list.append(strand)
+        
+        new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+        dna_structures.append(new_dna_structure)
+        
+        removed_strands_info.append((strand_1, strand_2))
+        print(f"Removed strands: {strand_1}, {strand_2}")
+    
+    print(f"Total number of new structures created: {len(dna_structures)}")
+    return dna_structures, removed_strands_info
+
+# Removing three strands above point in sphere
+def remove_three_strands_above_point_in_sphere(dna, point, sphere_radius, min_distance=0):
+    bases_above, base_to_strand_mapping = find_bases_above_point_in_sphere(dna, point, sphere_radius, min_distance)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    print("Bases above the point in sphere:", bases_above)
+    print("Base to strand mapping:", base_to_strand_mapping)
+    print("Longest strand:", longest_strand)
+    print("Longest strand index:", longest_strand_index)
+    
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    print("Strands to remove:", strands_to_remove)
+
+    dna_structures = []
+    removed_strands_info = []
+
+    # Create all possible triplets of strands to remove
+    strand_triplets = [(strand_1, strand_2, strand_3) for i, strand_1 in enumerate(strands_to_remove)
+                       for j, strand_2 in enumerate(list(strands_to_remove)[i + 1:])
+                       for strand_3 in list(strands_to_remove)[i + j + 2:]]
+
+    for strand_1, strand_2, strand_3 in strand_triplets:
+        strand_list = []
+        for idx, strand in enumerate(dna.strands):
+            if idx not in {strand_1, strand_2, strand_3}:
+                strand_list.append(strand)
+        
+        new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+        dna_structures.append(new_dna_structure)
+        
+        removed_strands_info.append((strand_1, strand_2, strand_3))
+        print(f"Removed strands: {strand_1}, {strand_2}, {strand_3}")
+    
+    print(f"Total number of new structures created: {len(dna_structures)}")
+    return dna_structures, removed_strands_info
+
+# Removing three strands below point in sphere
+def remove_three_strands_below_point_in_sphere(dna, point, sphere_radius, min_distance=0):
+    bases_below, base_to_strand_mapping = find_bases_below_point_in_sphere(dna, point, sphere_radius, min_distance)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    print("Bases below the point in sphere:", bases_below)
+    print("Base to strand mapping:", base_to_strand_mapping)
+    print("Longest strand:", longest_strand)
+    print("Longest strand index:", longest_strand_index)
+    
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    print("Strands to remove:", strands_to_remove)
+
+    dna_structures = []
+    removed_strands_info = []
+
+    # Create all possible triplets of strands to remove
+    strand_triplets = [(strand_1, strand_2, strand_3) for i, strand_1 in enumerate(strands_to_remove)
+                       for j, strand_2 in enumerate(list(strands_to_remove)[i + 1:])
+                       for strand_3 in list(strands_to_remove)[i + j + 2:]]
+
+    for strand_1, strand_2, strand_3 in strand_triplets:
+        strand_list = []
+        for idx, strand in enumerate(dna.strands):
+            if idx not in {strand_1, strand_2, strand_3}:
+                strand_list.append(strand)
+        
+        new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+        dna_structures.append(new_dna_structure)
+        
+        removed_strands_info.append((strand_1, strand_2, strand_3))
+        print(f"Removed strands: {strand_1}, {strand_2}, {strand_3}")
+    
+    print(f"Total number of new structures created: {len(dna_structures)}")
+    return dna_structures, removed_strands_info
+
+# Removing three strands in sphere
+def remove_three_strands_in_sphere(dna, point, sphere_radius):
+    bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, sphere_radius)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    print("Bases in sphere:", bases_in_sphere)
+    print("Base to strand mapping:", base_to_strand_mapping)
+    print("Longest strand:", longest_strand)
+    print("Longest strand index:", longest_strand_index)
+    
+    strands_in_sphere = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    print("Strands in sphere to consider for removal:", strands_in_sphere)
+
+    dna_structures = []
+    removed_strands_info = []
+
+    # Create all possible triplets of strands to remove
+    strand_triplets = [(strand_1, strand_2, strand_3) for i, strand_1 in enumerate(strands_in_sphere)
+                       for j, strand_2 in enumerate(list(strands_in_sphere)[i + 1:])
+                       for strand_3 in list(strands_in_sphere)[i + j + 2:]]
+
+    for strand_1, strand_2, strand_3 in strand_triplets:
+        strand_list = []
+        for idx, strand in enumerate(dna.strands):
+            if idx not in {strand_1, strand_2, strand_3}:
+                strand_list.append(strand)
+        
+        new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+        dna_structures.append(new_dna_structure)
+        
+        removed_strands_info.append((strand_1, strand_2, strand_3))
+        print(f"Removed strands: {strand_1}, {strand_2}, {strand_3}")
+    
+    print(f"Total number of new structures created: {len(dna_structures)}")
+    return dna_structures, removed_strands_info
+
+# Removing all staples above point in sphere
+def remove_all_staples_above_point_in_sphere(dna, point, sphere_radius, min_distance=0):
+    bases_above, base_to_strand_mapping = find_bases_above_point_in_sphere(dna, point, sphere_radius, min_distance)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    print("Bases above the point in sphere:", bases_above)
+    print("Base to strand mapping:", base_to_strand_mapping)
+    print("Longest strand:", longest_strand)
+    print("Longest strand index:", longest_strand_index)
+    
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    print("Strands to remove:", strands_to_remove)
+
+    new_strands = []
+    for idx, strand in enumerate(dna.strands):
+        if idx not in strands_to_remove:
+            new_strands.append(strand)
+    
+    new_dna_structure = DNAStructure(new_strands, dna.time, dna.box, dna.energy)
+    
+    print(f"Total number of strands removed: {len(strands_to_remove)}")
+    return new_dna_structure, list(strands_to_remove)
+
+# Removing all staples below point in sphere
+def remove_all_staples_below_point_in_sphere(dna, point, sphere_radius, min_distance=0):
+    bases_below, base_to_strand_mapping = find_bases_below_point_in_sphere(dna, point, sphere_radius, min_distance)
+    longest_strand, longest_strand_index = find_longest_strand(dna)
+    
+    print("Bases below the point in sphere:", bases_below)
+    print("Base to strand mapping:", base_to_strand_mapping)
+    print("Longest strand:", longest_strand)
+    print("Longest strand index:", longest_strand_index)
+    
+    strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
+    print("Strands to remove:", strands_to_remove)
+
+    strand_list = []
+    for idx, strand in enumerate(dna.strands):
+        if idx not in strands_to_remove:
+            strand_list.append(strand)
+    
+    new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+    
+    print(f"Total number of strands removed: {len(strands_to_remove)}")
+    return new_dna_structure, list(strands_to_remove)
+
+# Exporting DNA structures
 def export_dna_structures(new_dna_structures, base_path):
     output_paths = []
     for i, new_dna in enumerate(new_dna_structures):
@@ -229,6 +565,7 @@ def export_dna_structures(new_dna_structures, base_path):
         })
     return output_paths
 
+# Queueing relaxation simulations
 def queue_relaxation_simulations(structures, base_path, sim_base_path):
     simulation_manager = SimulationManager()
     sim_list_rel = []
@@ -250,6 +587,7 @@ def queue_relaxation_simulations(structures, base_path, sim_base_path):
     print("Completed all relaxation simulations")
     return sim_list_rel
 
+# Queueing equilibration simulations
 def queue_equilibration_simulations(structures, base_path, sim_base_path):
     simulation_manager = SimulationManager()
     sim_list_eq = []
@@ -270,6 +608,7 @@ def queue_equilibration_simulations(structures, base_path, sim_base_path):
     print("Completed all equilibration simulations")
     return sim_list_eq
 
+# Queueing production simulations
 def queue_production_simulations(structures, base_path, sim_base_path):
     simulation_manager = SimulationManager()
     sim_list_prod = []
@@ -290,6 +629,7 @@ def queue_production_simulations(structures, base_path, sim_base_path):
     print("Completed all production simulations")
     return sim_list_prod
 
+# Running all simulations
 def run_all_simulations(structures, base_path, sim_base_path):
     print("Starting relaxation simulations...")
     sim_list_rel = queue_relaxation_simulations(structures, base_path, sim_base_path)
@@ -298,3 +638,4 @@ def run_all_simulations(structures, base_path, sim_base_path):
     print("Starting production simulations...")
     sim_list_prod = queue_production_simulations(structures, base_path, sim_base_path)
     return sim_list_rel, sim_list_eq, sim_list_prod
+
