@@ -9,10 +9,10 @@ from copy import deepcopy
 from ipy_oxdna.oxdna_simulation import Simulation , SimulationManager
 import copy
 from tqdm.auto import tqdm
-# simulation of the unmodified structure for initial relaxation 
 
-eq_steps = 1e5
-prod_steps = 1e5
+
+eq_steps = 1e4
+prod_steps = 1e4
 rel_steps = 1e2
 eq_parameters = {'dt':f'0.003','steps':f'{eq_steps}','print_energy_every': f'1e5', 'interaction_type': 'DNA2',
                            'print_conf_interval':f'1e5', 'fix_diffusion':'false', 'T':f'20C','max_density_multiplier':f'50'}
@@ -23,9 +23,9 @@ prod_parameters = {'dt':f'0.003','steps':f'{prod_steps}','print_energy_every': f
 
 # create relxation simulation
  
-path = '/home/ava/Dropbox (ASU)/temp/Metabackbone/structure_files/six_helix_oxdna_file/Automatically_removed_staples/1512_bp/one_staple_remvd'
-file_dir = os.path.join(path,'structure_5')
-sim_path = '/home/ava/Dropbox (ASU)/temp/Metabackbone/metabackbone/notebooks/Simulations/simulations/test'
+path = '/home/ava/MetaBackbone_project/Metabackbone-scripts/structure_files/six_helix_oxdna_file/Automatically_removed_staples/1512_bp/all_below'
+file_dir = os.path.join(path,'structure_0')
+sim_path = '/home/ava/MetaBackbone_project/Metabackbone-scripts/Notebook/Simulations_results/Results/1512_bp_all_below'
 rel_dir = os.path.join(sim_path,'relaxed')
 
 # print(f"Contents of file_dir: {os.listdir(file_dir)}")
