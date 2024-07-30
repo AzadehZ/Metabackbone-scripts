@@ -1,12 +1,17 @@
-import numpy as np
-import random
 from itertools import combinations
+import numpy as np
 import sys
+from oxDNA_analysis_tools.UTILS.oxview import oxdna_conf, from_path
+from oxDNA_analysis_tools.UTILS.RyeReader import describe, get_confs, inbox
+from oxDNA_analysis_tools.UTILS.data_structures import TopInfo, TrajInfo
 from pathlib import Path
 import os
 from ipy_oxdna.dna_structure import DNAStructure, DNAStructureStrand, load_dna_structure, DNABase, strand_from_info
-from ipy_oxdna.oxdna_simulation import Simulation, SimulationManager
 from copy import deepcopy
+from ipy_oxdna.oxdna_simulation import Simulation, SimulationManager
+import copy
+from tqdm.auto import tqdm
+import random
 
 def load_dna_structure_files(input_path):
     dat_path = os.path.join(input_path, '1512_bp.dat')
