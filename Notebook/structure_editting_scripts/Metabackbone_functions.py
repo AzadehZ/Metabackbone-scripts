@@ -59,10 +59,10 @@ def calculate_left_right_pos(dna, left_indices, right_indices):
         for base in strand:
             if base.uid in left_indices:
                 left_pos.append(base.pos)
-                print(f"Left index {base.uid} has position {base.pos}")
+                # print(f"Left index {base.uid} has position {base.pos}")
             elif base.uid in right_indices:
                 right_pos.append(base.pos)
-                print(f"Right index {base.uid} has position {base.pos}")
+                # print(f"Right index {base.uid} has position {base.pos}")
                 
     if left_pos:
         cms_left_side = np.mean(left_pos, axis=0)
