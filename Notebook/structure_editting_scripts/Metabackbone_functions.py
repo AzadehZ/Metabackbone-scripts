@@ -1,4 +1,3 @@
-from itertools import combinations
 import numpy as np
 import sys
 from oxDNA_analysis_tools.UTILS.oxview import oxdna_conf, from_path
@@ -12,6 +11,19 @@ from ipy_oxdna.oxdna_simulation import Simulation, SimulationManager
 import copy
 from tqdm.auto import tqdm
 import random
+
+def print_colored(message, color_code):
+    print(f"\033[{color_code}m{message}\033[0m")
+
+# ANSI color codes
+colors = {
+    'blue': '34',
+    'green': '32',
+    'yellow': '33',
+    'cyan': '36',
+    'red': '31'
+}
+
 
 # Loading DNA structure files
 def load_dna_structure_files(input_path):
@@ -55,14 +67,16 @@ def calculate_left_right_pos(dna, left_indices, right_indices):
     left_pos = []
     right_pos = []
     
+    print_colored(f"Left indices: {left_indices}", colors['blue'])
+    print_colored(f"Right indices: {right_indices}", colors['blue'])
+    
     for strand in dna.strands:
         for base in strand:
+            print_colored(f"Base UID: {base.uid}", colors['blue'])  # Debug statement
             if base.uid in left_indices:
                 left_pos.append(base.pos)
-                # print(f"Left index {base.uid} has position {base.pos}")
             elif base.uid in right_indices:
                 right_pos.append(base.pos)
-                # print(f"Right index {base.uid} has position {base.pos}")
                 
     if left_pos:
         cms_left_side = np.mean(left_pos, axis=0)
@@ -74,11 +88,11 @@ def calculate_left_right_pos(dna, left_indices, right_indices):
     else:
         raise ValueError("No positions found for right indices.")
     
-    print(f"Center of mass for the left side: {cms_left_side}")
-    print(f"Center of mass for the right side: {cms_right_side}")
+    print_colored(f"Center of mass for the left side: {cms_left_side}", colors['green'])
+    print_colored(f"Center of mass for the right side: {cms_right_side}", colors['green'])
     
     midpoint = (cms_left_side + cms_right_side) / 2
-    print(f"Midpoint between the left and right sides: {midpoint}")
+    print_colored(f"Midpoint between the left and right sides: {midpoint}", colors['green'])
     
     return cms_left_side, cms_right_side, midpoint
 
@@ -132,14 +146,14 @@ def find_bases_around_point(dna, point, min_distance, max_distance):
                     
     if left_bases:
         cms_left_bases = np.mean(left_bases, axis=0)
-        print(f"Center of mass for left bases around: {cms_left_bases}")
+        # print(f"Center of mass for left bases around: {cms_left_bases}")
     else:
         cms_left_bases = None
         print("No left bases found.")
     
     if right_bases:
         cms_right_bases = np.mean(right_bases, axis=0)
-        print(f"Center of mass for right bases around: {cms_right_bases}")
+        # print(f"Center of mass for right bases around: {cms_right_bases}")
     else:
         cms_right_bases = None
         print("No right bases found.")
@@ -166,8 +180,7 @@ def calculate_bend_angle(P, cms_left, cms_right):
     return angle
 
 # Finding bend angle
-def find_bend_angle(dna, left_indices, right_indices, longest_strand, min_distance_threshold = 2.5, min_distance = 7.0, max_distance = 20.0):
-    point_pos = find_valid_point(dna, left_indices, right_indices, longest_strand, min_distance_threshold)
+def find_bend_angle(dna, left_indices, right_indices, longest_strand, point_pos, min_distance_threshold = 2.5, min_distance = 7.0, max_distance = 20.0):
     (left_bases, right_bases, 
     cms_left_bases, cms_right_bases, 
     left_base_indices, right_base_indices, 
@@ -175,7 +188,7 @@ def find_bend_angle(dna, left_indices, right_indices, longest_strand, min_distan
     cms_left = calculate_center_of_mass(left_bases)
     cms_right = calculate_center_of_mass(right_bases)
     bend_angle = calculate_bend_angle(point_pos, cms_left, cms_right)
-    return point_pos, bend_angle
+    return bend_angle
 
 # Calculating angles for all structures
 def calculate_angles_for_all_structures(dna_list, left_indices, right_indices, min_distance_threshold = 2.5, min_distance = 7.0, max_distance = 20.0):
