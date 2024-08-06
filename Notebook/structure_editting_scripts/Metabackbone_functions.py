@@ -67,12 +67,12 @@ def calculate_left_right_pos(dna, left_indices, right_indices):
     left_pos = []
     right_pos = []
     
-    print_colored(f"Left indices: {left_indices}", colors['blue'])
-    print_colored(f"Right indices: {right_indices}", colors['blue'])
+    # print_colored(f"Left indices: {left_indices}", colors['blue'])
+    # print_colored(f"Right indices: {right_indices}", colors['blue'])
     
     for strand in dna.strands:
         for base in strand:
-            print_colored(f"Base UID: {base.uid}", colors['blue'])  # Debug statement
+            # print_colored(f"Base UID: {base.uid}", colors['blue'])  # Debug statement
             if base.uid in left_indices:
                 left_pos.append(base.pos)
             elif base.uid in right_indices:
@@ -88,11 +88,11 @@ def calculate_left_right_pos(dna, left_indices, right_indices):
     else:
         raise ValueError("No positions found for right indices.")
     
-    print_colored(f"Center of mass for the left side: {cms_left_side}", colors['green'])
-    print_colored(f"Center of mass for the right side: {cms_right_side}", colors['green'])
+    # print_colored(f"Center of mass for the left side: {cms_left_side}", colors['green'])
+    # print_colored(f"Center of mass for the right side: {cms_right_side}", colors['green'])
     
     midpoint = (cms_left_side + cms_right_side) / 2
-    print_colored(f"Midpoint between the left and right sides: {midpoint}", colors['green'])
+    # print_colored(f"Midpoint between the left and right sides: {midpoint}", colors['green'])
     
     return cms_left_side, cms_right_side, midpoint
 
@@ -526,8 +526,8 @@ def remove_three_strands_in_sphere(dna, point, sphere_radius):
     
     print("Bases in sphere:", bases_in_sphere)
     print("Base to strand mapping:", base_to_strand_mapping)
-    print("Longest strand:", longest_strand)
-    print("Longest strand index:", longest_strand_index)
+    # print("Longest strand:", longest_strand)
+    # print("Longest strand index:", longest_strand_index)
     
     strands_in_sphere = set(base_to_strand_mapping.values()) - {longest_strand_index}
     print("Strands in sphere to consider for removal:", strands_in_sphere)
