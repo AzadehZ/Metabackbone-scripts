@@ -7,6 +7,8 @@ from typing import Dict, Tuple, List
 from Metabackbone_functions import (load_dna_structure_files, find_longest_strand, find_cross_over_in_longest_strand, calculate_left_right_pos, find_valid_point, find_bases_around_point, calculate_center_of_mass, calculate_bend_angle, find_bend_angle, find_bases_in_sphere, remove_three_strands_in_sphere, export_dna_structures, run_all_simulations)
 from ipy_oxdna.dna_structure import DNAStructure, DNAStructureStrand, load_dna_structure, DNABase, strand_from_info
 from ipy_oxdna.oxdna_simulation import Simulation, SimulationManager
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 
@@ -303,10 +305,125 @@ def find_symmetric_strands(dna, point, sphere_radius, num_strands=3):
 
     return selected_strands
 
-def remove_symmetric_strands_in_sphere(dna, point, sphere_radius):
-    symmetric_strands = find_symmetric_strands(dna, point, sphere_radius, num_strands=3)
-    print_colored(f"Selected symmetric strands for removal: {symmetric_strands}", colors['cyan'])
+# def remove_symmetric_strands_in_sphere(dna, point, sphere_radius):
+#     symmetric_strands = find_symmetric_strands(dna, point, sphere_radius, num_strands=3)
+#     print_colored(f"Selected symmetric strands for removal: {symmetric_strands}", colors['cyan'])
 
-    strand_list = [strand for idx, strand in enumerate(dna.strands) if idx not in symmetric_strands]
-    new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
-    return new_dna_structure, symmetric_strands
+#     strand_list = [strand for idx, strand in enumerate(dna.strands) if idx not in symmetric_strands]
+#     new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+#     return new_dna_structure, symmetric_strands
+
+def remove_symmetric_strands_in_sphere(dna, point, sphere_radius, num_strands=3):
+    symmetric_collections = find_multiple_symmetric_strand_collections(dna, point, sphere_radius, num_strands)
+    new_structures = []
+    removed_strands_info = []
+
+    for collection in symmetric_collections:
+        strand_list = [strand for idx, strand in enumerate(dna.strands) if idx not in collection]
+        new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+        new_structures.append(new_dna_structure)
+        removed_strands_info.append(collection)
+
+    return new_structures, removed_strands_info
+
+
+def find_multiple_symmetric_strand_collections(dna, point, sphere_radius, num_strands=3):
+    bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, sphere_radius)
+    strand_distances = {}
+
+    # Calculate the distance of each strand from the point
+    for strand_index in set(base_to_strand_mapping.values()):
+        strand_bases = [base for base in dna.strands[strand_index]]
+        avg_distance = np.mean([np.linalg.norm(np.array(base.pos) - point) for base in strand_bases])
+        strand_distances[strand_index] = avg_distance
+
+    # Sort strands by distance
+    sorted_strands = sorted(strand_distances.items(), key=lambda x: x[1])
+    
+    # Find multiple sets of symmetric strands
+    symmetric_collections = []
+    n = len(sorted_strands)
+    for i in range(n):
+        for j in range(i+1, n):
+            for k in range(j+1, n):
+                if len(symmetric_collections) < num_strands:
+                    symmetric_collections.append([sorted_strands[i][0], sorted_strands[j][0], sorted_strands[k][0]])
+                else:
+                    break
+
+    return symmetric_collections
+
+
+def plot_fitness_scores_line(fitness_history):
+    plt.figure(figsize=(10, 6))
+    plt.plot(fitness_history, marker='o', linestyle='-', color='b')
+    plt.xlabel('Iteration')
+    plt.ylabel('Fitness Score')
+    plt.title('Fitness Scores Over Iterations')
+    plt.grid(True)
+    plt.show()
+
+
+def plot_fitness_scores_box(fitness_scores_all_iterations):
+    plt.figure(figsize=(10, 6))
+    plt.boxplot(fitness_scores_all_iterations, patch_artist=True)
+    plt.xlabel('Iteration')
+    plt.ylabel('Fitness Scores')
+    plt.title('Distribution of Fitness Scores Over Iterations')
+    plt.grid(True)
+    plt.show()
+
+
+def plot_bend_angles_line(angle_history, desired_angle):
+    plt.figure(figsize=(10, 6))
+    plt.plot(angle_history, marker='o', linestyle='-', color='r')
+    plt.axhline(y=desired_angle, color='g', linestyle='--', label='Desired Angle')
+    plt.xlabel('Iteration')
+    plt.ylabel('Bend Angle (degrees)')
+    plt.title('Bend Angles Over Iterations')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+def plot_bend_angles_scatter(angles_all_iterations, best_angles):
+    plt.figure(figsize=(10, 6))
+    for iteration, angles in enumerate(angles_all_iterations):
+        plt.scatter([iteration]*len(angles), angles, color='b', alpha=0.6, label='All Structures' if iteration == 0 else "")
+    plt.scatter(range(len(best_angles)), best_angles, color='r', label='Best Mutants')
+    plt.xlabel('Iteration')
+    plt.ylabel('Bend Angle (degrees)')
+    plt.title('Bend Angles Over Iterations')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+def plot_fitness_vs_bend_angle(angles_all, fitness_scores_all, best_angles, best_fitness_scores):
+    plt.figure(figsize=(10, 6))
+    plt.scatter(angles_all, fitness_scores_all, color='b', alpha=0.6, label='All Structures')
+    plt.scatter(best_angles, best_fitness_scores, color='r', label='Best Mutants')
+    plt.xlabel('Bend Angle (degrees)')
+    plt.ylabel('Fitness Score')
+    plt.title('Fitness Score vs Bend Angle')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+
+def plot_removed_staples_heatmap(removed_staples_info_all):
+    # Create a matrix to store the count of removed staples
+    max_strand_index = max(max(info) for info in removed_staples_info_all)
+    removal_matrix = [[0] * (max_strand_index + 1) for _ in range(len(removed_staples_info_all))]
+
+    for i, removed_strands in enumerate(removed_staples_info_all):
+        for strand in removed_strands:
+            removal_matrix[i][strand] += 1
+
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(removal_matrix, cmap='viridis', cbar=True)
+    plt.xlabel('Strand Index')
+    plt.ylabel('Iteration')
+    plt.title('Heatmap of Removed Staples Over Iterations')
+    plt.show()
