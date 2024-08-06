@@ -275,3 +275,38 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
         left_indices, right_indices = new_indices_list[0]
     
     print_colored("Evolutionary algorithm completed.", colors['red'])
+    
+    
+def find_symmetric_strands(dna, point, sphere_radius, num_strands=3):
+    bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, sphere_radius)
+    strand_distances = {}
+
+    # Calculate the distance of each strand from the point
+    for strand_index in set(base_to_strand_mapping.values()):
+        strand_bases = [base for base in dna.strands[strand_index]]
+        avg_distance = np.mean([np.linalg.norm(np.array(base.pos) - point) for base in strand_bases])
+        strand_distances[strand_index] = avg_distance
+
+    # Sort strands by distance and select symmetrically
+    sorted_strands = sorted(strand_distances.items(), key=lambda x: x[1])
+    
+    # Select strands symmetrically
+    selected_strands = []
+    i, j = 0, len(sorted_strands) - 1
+    while len(selected_strands) < num_strands and i <= j:
+        if len(selected_strands) < num_strands:
+            selected_strands.append(sorted_strands[i][0])
+            i += 1
+        if len(selected_strands) < num_strands:
+            selected_strands.append(sorted_strands[j][0])
+            j -= 1
+
+    return selected_strands
+
+def remove_symmetric_strands_in_sphere(dna, point, sphere_radius):
+    symmetric_strands = find_symmetric_strands(dna, point, sphere_radius, num_strands=3)
+    print_colored(f"Selected symmetric strands for removal: {symmetric_strands}", colors['cyan'])
+
+    strand_list = [strand for idx, strand in enumerate(dna.strands) if idx not in symmetric_strands]
+    new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
+    return new_dna_structure, symmetric_strands
