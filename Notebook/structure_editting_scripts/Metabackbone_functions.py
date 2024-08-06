@@ -199,6 +199,22 @@ def calculate_angles_for_all_structures(dna_list, left_indices, right_indices, m
         angles.append((point_pos, bend_angle))
     return angles
 
+# # Finding bases in sphere and determining lost staples
+# def find_bases_in_sphere(reference_dna, mutant_dna_list, point, sphere_radius):
+#     reference_bases, _ = find_bases_in_sphere(reference_dna, point, sphere_radius)
+#     lost_staples = []
+#     lost_staples_dict = {}
+
+#     for mutant_index, mutant_dna in enumerate(mutant_dna_list):
+#         mutant_bases, _ = find_bases_in_sphere(mutant_dna, point, sphere_radius)
+#         lost_in_mutant = list(set(reference_bases) - set(mutant_bases))
+#         lost_staples_dict[f'mutant_{mutant_index}'] = lost_in_mutant
+#         lost_staples.extend(lost_in_mutant)
+    
+#     return lost_staples_dict, list(set(lost_staples))
+
+
+
 # Finding bases in sphere
 def find_bases_in_sphere(dna, point, sphere_radius):
     bases_in_sphere = []
@@ -211,6 +227,8 @@ def find_bases_in_sphere(dna, point, sphere_radius):
                 bases_in_sphere.append(base.uid)
                 base_to_strand_mapping[base.uid] = strand_index
     return bases_in_sphere, base_to_strand_mapping
+
+
 
 # Finding bases above point in sphere
 def find_bases_above_point_in_sphere(dna, point, sphere_radius, min_distance=0):
@@ -536,6 +554,19 @@ def remove_three_strands_in_sphere(dna, point, sphere_radius):
     
     print(f"Total number of new structures created: {len(dna_structures)}")
     return dna_structures, removed_strands_info
+
+# Function to store removed strands and their bases
+def stored_removed_strands(dna, removed_strands_info):
+    summaries = []
+    for i, (strand_1, strand_2, strand_3) in enumerate(removed_strands_info):
+        strands = [strand_1, strand_2, strand_3]
+        removed_bases = []
+        for strand in strands:
+            removed_bases.extend([base.uid for base in dna.strands[strand]])
+        summary = f"For structure_{i}, staples with the indexes {strand_1}, {strand_2}, {strand_3} were removed."
+        summaries.append((summary, removed_bases))
+    return summaries  
+
 
 # Removing all staples above point in sphere
 def remove_all_staples_above_point_in_sphere(dna, point, sphere_radius, min_distance=0):

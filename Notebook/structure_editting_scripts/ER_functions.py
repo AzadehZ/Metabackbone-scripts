@@ -116,6 +116,37 @@ def run_simulations_for_structure(structure_id, base_path, sim_base_path, rel_pa
     
     
 # Function to create new left and right indices after removing staples
+# def update_indices_for_selected_structures(selected_structures, original_structure, left_indices, right_indices, removed_staples_info):
+#     new_indices = []
+
+#     for structure, removed_strands in zip(selected_structures, removed_staples_info):
+#         new_left_indices = []
+#         new_right_indices = []
+
+#         if isinstance(removed_strands, list) and all(isinstance(rs, list) for rs in removed_strands):
+#             removed_bases_indices = [base.uid for strand in removed_strands for base in strand]
+#         else:
+#             removed_bases_indices = removed_strands
+
+#         max_removed_index = max(removed_bases_indices) if removed_bases_indices else -1
+
+#         for index in left_indices:
+#             if index < max_removed_index:
+#                 new_left_indices.append(index)
+#             else:
+#                 new_left_indices.append(index - len(removed_bases_indices))
+
+#         for index in right_indices:
+#             if index < max_removed_index:
+#                 new_right_indices.append(index)
+#             else:
+#                 new_right_indices.append(index - len(removed_bases_indices))
+
+#         new_indices.append((new_left_indices, new_right_indices))
+
+#     return new_indices
+
+# Function to create new left and right indices after removing staples
 def update_indices_for_selected_structures(selected_structures, original_structure, left_indices, right_indices, removed_staples_info):
     new_indices = []
 
@@ -123,11 +154,7 @@ def update_indices_for_selected_structures(selected_structures, original_structu
         new_left_indices = []
         new_right_indices = []
 
-        if isinstance(removed_strands, list) and all(isinstance(rs, list) for rs in removed_strands):
-            removed_bases_indices = [base.uid for strand in removed_strands for base in strand]
-        else:
-            removed_bases_indices = removed_strands
-
+        removed_bases_indices = [base.uid for strand in removed_strands for base in original_structure.strands[strand]]
         max_removed_index = max(removed_bases_indices) if removed_bases_indices else -1
 
         for index in left_indices:
@@ -147,7 +174,6 @@ def update_indices_for_selected_structures(selected_structures, original_structu
     return new_indices
 
 
-# Main evolution loop
 def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, num_iterations, num_best_structures, desired_angle, tolerance, base_path, sim_base_path, sphere_radius):
     current_structures = [initial_dna_structure]
     removed_staples_dict = {}  # Dictionary to store removed staples info
@@ -156,37 +182,42 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
         print_colored(f"Iteration {iteration + 1}", colors['yellow'])
         
         new_structures = []
-        new_structures_map = {}
-        structure_counter = 0
+        removed_strands_info_all = []
         
         for dna in current_structures:
             # Step 1: Find a valid point in the DNA structure
+            print_colored("Step 1: Finding a valid point in the DNA structure...", colors['yellow'])
             longest_strand, _ = find_longest_strand(dna)
             point_pos = find_valid_point(dna, left_indices, right_indices, longest_strand)
             print_colored(f'Found a valid point in the DNA structure: {point_pos}', colors['green'])
             
             # Step 2: Remove three random staples within a sphere around the point
+            print_colored("Step 2: Removing three random staples within a sphere around the point...", colors['yellow'])
             mutants, removed_strands_info = remove_three_strands_in_sphere(dna, point_pos, sphere_radius)
-            print_colored(f"Removed three random staples. Number of new structures: {len(mutants)}", colors['green'])
-            
+            removed_strands_info_all.extend(removed_strands_info)
             new_structures.extend(mutants)
+            print_colored(f"Removed three random staples. Number of new structures: {len(mutants)}", colors['green'])
         
         # Determine the number of mutants based on the number of new structures created
         num_mutants = len(new_structures)
         print_colored(f"Iteration {iteration + 1}: Generated {num_mutants} new structures.", colors['green'])
         
+        # Step 3: Export new DNA structures
+        print_colored("Step 3: Exporting DNA structures...", colors['yellow'])
         export_paths = export_dna_structures(new_structures, base_path)
         print_colored("Exported DNA structures.", colors['green'])
         print_colored(f"Export paths: {export_paths}", colors['blue'])
         
-        # Step 3: Simulate each modified structure
+        # Step 4: Simulate each modified structure
+        print_colored("Step 4: Simulating each modified structure...", colors['yellow'])
         for export_path in export_paths:
             structure_id = export_path['structure_id']
             print_colored(f"Starting simulations for structure {structure_id}...", colors['yellow'])
             run_simulations_for_structure(structure_id, base_path, sim_base_path, rel_parameters, eq_parameters, prod_parameters)
             print_colored(f"Simulations for structure {structure_id} completed.", colors['yellow'])
         
-        # Step 4: Measure the angle at the joint for each mutant after simulation
+        # Step 5: Measure the angle at the joint for each mutant after simulation
+        print_colored("Step 5: Measuring the angle at the joint for each mutant after simulation...", colors['yellow'])
         angles = []
         for export_path in export_paths:
             structure_id = export_path['structure_id']
@@ -196,33 +227,52 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
             angles.append((structure_id, bend_angle))
             print_colored(f"Measured bend angle for structure {structure_id}: {bend_angle} degrees.", colors['cyan'])
         
-        # Step 5: Evaluate fitness
+        # Step 6: Evaluate fitness
+        print_colored("Step 6: Evaluating fitness of mutants...", colors['yellow'])
         fitness_scores = evaluate_fitness([angle for _, angle in angles], desired_angle, tolerance)
         print_colored("Evaluated fitness of mutants.", colors['green'])
         print_colored(f"Fitness scores: {fitness_scores}", colors['blue'])
         
-        # Step 6: Select the best mutants based on fitness scores
+        # Step 7: Select the best mutants based on fitness scores
+        print_colored("Step 7: Selecting the best mutants based on fitness scores...", colors['yellow'])
         sorted_mutants = sorted(zip(angles, fitness_scores), key=lambda x: x[1])
+        
+        # Display results for all structures
+        print_colored("Results for all structures:", colors['cyan'])
+        for (structure_id, angle), fitness_score in sorted_mutants:
+            print_colored(f"Structure ID: {structure_id}, Bend Angle: {angle}, Fitness Score: {fitness_score}", colors['cyan'])
+
+        # Select the best mutants
         best_mutants = [new_structures[i] for i, (_, _) in enumerate(sorted_mutants[:num_best_structures])]
         best_angles = [angle for (_, angle), _ in sorted_mutants[:num_best_structures]]
-        print_colored(f"Selected the best {num_best_structures} mutants.", colors['green'])
-        print_colored(f"Best angles: {best_angles}", colors['blue'])
+        best_removed_strands_info = [removed_strands_info_all[i] for i, (_, _) in enumerate(sorted_mutants[:num_best_structures])]
+        
+        # Display results for the selected best structures
+        print_colored(f"Selected the best {num_best_structures} mutants:", colors['green'])
+        for i, (angle, fitness_score) in enumerate(zip(best_angles, [fs for _, fs in sorted_mutants[:num_best_structures]])):
+            print_colored(f"Selected Structure {i}: Bend Angle: {angle}, Fitness Score: {fitness_score}", colors['blue'])
 
-        # Store the removed staples info for the best mutants
+        # Step 8: Store the removed staples info for the best mutants
+        print_colored("Step 8: Storing the removed staples info for the best mutants...", colors['yellow'])
         for i, (structure_id, _) in enumerate(sorted_mutants[:num_best_structures]):
-            removed_staples_dict[structure_id] = removed_strands_info[i]
+            removed_staples_dict[structure_id] = best_removed_strands_info[i]
+            summary, removed_bases = stored_removed_strands(initial_dna_structure, [best_removed_strands_info[i]])[0]
+            print_colored(f"Structure ID: {structure_id} - {summary}", colors['green'])
+            print_colored(f"Removed bases: {removed_bases}", colors['green'])
         
         # Check if the best angle is within the desired tolerance
         if any(abs(angle - desired_angle) <= tolerance for angle in best_angles):
-            print_colored("Desired angle achieved within tolerance.", colors['red'])
+            print_colored("Desired angle achieved within tolerance. Stopping evolution process.", colors['red'])
             break
         
-        # Step 7: Update the current structures with the best mutants for the next iteration
+        # Step 9: Update the current structures with the best mutants for the next iteration
+        print_colored("Step 9: Updating the current structures with the best mutants for the next iteration...", colors['yellow'])
         current_structures = best_mutants
         print_colored(f"Updated current structures for iteration {iteration + 1}.", colors['green'])
         
-        # Step 8: Update left and right indices for each selected structure
-        new_indices = update_indices_for_selected_structures(current_structures, initial_dna_structure, left_indices, right_indices, removed_staples_dict)
-        left_indices, right_indices = new_indices[0]
+        # Step 10: Update left and right indices for each selected structure
+        print_colored("Step 10: Updating left and right indices for each selected structure...", colors['yellow'])
+        new_indices_list = update_indices_for_selected_structures(current_structures, initial_dna_structure, left_indices, right_indices, best_removed_strands_info)
+        left_indices, right_indices = new_indices_list[0]
     
     print_colored("Evolutionary algorithm completed.", colors['red'])
