@@ -1,0 +1,36 @@
+           0  -0.614649   0.000  0.000  0.000  
+         100  -1.521723   0.058  0.598  0.000  
+INFO: seeding the RNG with -981261650
+INFO: Initializing backend 
+
+WARNING: The 'backend_precision' option cannot be set by input file when running on CPU
+
+INFO: Simulation type: MC
+INFO: The generator will try to take into account bonded interactions by choosing distances between bonded neighbours no larger than 2.000000
+INFO: Converting temperature from Celsius (30.000000 C°) to simulation units (0.101050)
+INFO: Using a maximum backbone force of 200  (the corresponding mbf_xmax is 0.24505) and a far value of 200
+INFO: Running Debye-Huckel at salt concentration =  1
+INFO: Using different widths for major and minor grooves
+INFO: Temperature change detected (new temperature: 30.00 C, 303.15 K), re-initialising the DNA interaction
+DEBUG: Debye-Huckel parameters: Q=0.054300, lambda_0=0.361646, lambda=0.363539, r_high=1.090618, cutoff=2.598724
+DEBUG: Debye-Huckel parameters: debye_huckel_RC=1.635926e+00, debye_huckel_B=8.336024e-03
+INFO: The Debye length at this temperature and salt concentration is 0.363539
+INFO: Setting the maximum IO limit to 5 MB/s
+INFO: pid: 695567
+DEBUG: Debye-Huckel parameters: Q=0.054300, lambda_0=0.361646, lambda=0.363539, r_high=1.090618, cutoff=2.598724
+DEBUG: Debye-Huckel parameters: debye_huckel_RC=1.635926e+00, debye_huckel_B=8.336024e-03
+INFO: The Debye length at this temperature and salt concentration is 0.363539
+INFO: (Cells.cpp) N_cells_side: 21, 21, 21; rcut=3.59872, IS_MC: 1
+INFO: N: 4372, N molecules: 67
+
+INFO: Total Running Time: 4.01869 s, per step: 40.1869 ms
+INFO: Timings, in seconds, by Timer (total, own, spent in children)
+> SimBackend                          4.019 (100.0%)        0.287 (  7.1%)        3.732 ( 92.9%)
+***> Rotations+Translations           3.538 ( 88.0%)        3.538 ( 88.0%)        0.000 (  0.0%)
+***> Observables                      0.194 (  4.8%)        0.194 (  4.8%)        0.000 (  0.0%)
+> Lists                               0.040 (  1.0%)        0.040 (  1.0%)        0.000 (  0.0%)
+
+
+Please cite at least the following publication for any work that uses the oxDNA simulation package
+  * E. Poppleton et al., J. Open Source Softw. 8, 4693 (2023), DOI: 10.21105/joss.04693
+Run time: 4.32317911228165
