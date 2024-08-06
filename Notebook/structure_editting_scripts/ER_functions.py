@@ -55,12 +55,9 @@ def get_indexes_from_positions(new_positions: List[np.ndarray], index_position_m
         if key in index_position_map:
             new_index_map[key] = index_position_map[key]
         else:
-            # Handle the case where the position is not found
-            logging.warning(f"Position {key} not found in the initial map. It may indicate that the base has moved significantly or is new.")
+            print_colored(f"Position {key} not found in the initial map.", colors['red'])
             raise ValueError(f"Position {key} not found in the initial map.")
     return new_index_map
-
-
 
 
 def check_dna_structure(dna):
@@ -77,15 +74,8 @@ def check_dna_structure(dna):
         print_colored("DNA does not have 'strands' attribute.", colors['red'])
 
 
-
 def evaluate_fitness(angles, desired_angle, tolerance):
-    fitness_scores = []
-    for angle in angles:
-        difference = abs(angle - desired_angle)
-        fitness_score = difference
-        fitness_scores.append(fitness_score)
-    return fitness_scores
-
+    return [abs(angle - desired_angle) for angle in angles]
 
 def run_simulations_for_structure(structure_id, base_path, sim_base_path, rel_parameters, eq_parameters, prod_parameters):
     file_dir = os.path.join(base_path, f'structure_{structure_id}')
@@ -123,3 +113,116 @@ def run_simulations_for_structure(structure_id, base_path, sim_base_path, rel_pa
     simulation_manager.worker_manager(gpu_mem_block=False)
     print_colored(f"Production simulation for structure {structure_id} completed.", colors['green'])
     print_colored(f"All simulations for structure {structure_id} completed.\n", colors['cyan'])
+    
+    
+# Function to create new left and right indices after removing staples
+def update_indices_for_selected_structures(selected_structures, original_structure, left_indices, right_indices, removed_staples_info):
+    new_indices = []
+
+    for structure, removed_strands in zip(selected_structures, removed_staples_info):
+        new_left_indices = []
+        new_right_indices = []
+
+        if isinstance(removed_strands, list) and all(isinstance(rs, list) for rs in removed_strands):
+            removed_bases_indices = [base.uid for strand in removed_strands for base in strand]
+        else:
+            removed_bases_indices = removed_strands
+
+        max_removed_index = max(removed_bases_indices) if removed_bases_indices else -1
+
+        for index in left_indices:
+            if index < max_removed_index:
+                new_left_indices.append(index)
+            else:
+                new_left_indices.append(index - len(removed_bases_indices))
+
+        for index in right_indices:
+            if index < max_removed_index:
+                new_right_indices.append(index)
+            else:
+                new_right_indices.append(index - len(removed_bases_indices))
+
+        new_indices.append((new_left_indices, new_right_indices))
+
+    return new_indices
+
+
+# Main evolution loop
+def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, num_iterations, num_best_structures, desired_angle, tolerance, base_path, sim_base_path, sphere_radius):
+    current_structures = [initial_dna_structure]
+    removed_staples_dict = {}  # Dictionary to store removed staples info
+    
+    for iteration in range(num_iterations):
+        print_colored(f"Iteration {iteration + 1}", colors['yellow'])
+        
+        new_structures = []
+        new_structures_map = {}
+        structure_counter = 0
+        
+        for dna in current_structures:
+            # Step 1: Find a valid point in the DNA structure
+            longest_strand, _ = find_longest_strand(dna)
+            point_pos = find_valid_point(dna, left_indices, right_indices, longest_strand)
+            print_colored(f'Found a valid point in the DNA structure: {point_pos}', colors['green'])
+            
+            # Step 2: Remove three random staples within a sphere around the point
+            mutants, removed_strands_info = remove_three_strands_in_sphere(dna, point_pos, sphere_radius)
+            print_colored(f"Removed three random staples. Number of new structures: {len(mutants)}", colors['green'])
+            
+            new_structures.extend(mutants)
+        
+        # Determine the number of mutants based on the number of new structures created
+        num_mutants = len(new_structures)
+        print_colored(f"Iteration {iteration + 1}: Generated {num_mutants} new structures.", colors['green'])
+        
+        export_paths = export_dna_structures(new_structures, base_path)
+        print_colored("Exported DNA structures.", colors['green'])
+        print_colored(f"Export paths: {export_paths}", colors['blue'])
+        
+        # Step 3: Simulate each modified structure
+        for export_path in export_paths:
+            structure_id = export_path['structure_id']
+            print_colored(f"Starting simulations for structure {structure_id}...", colors['yellow'])
+            run_simulations_for_structure(structure_id, base_path, sim_base_path, rel_parameters, eq_parameters, prod_parameters)
+            print_colored(f"Simulations for structure {structure_id} completed.", colors['yellow'])
+        
+        # Step 4: Measure the angle at the joint for each mutant after simulation
+        angles = []
+        for export_path in export_paths:
+            structure_id = export_path['structure_id']
+            simulated_dna = load_simulated_structure(structure_id, sim_base_path)
+            
+            bend_angle = find_bend_angle(simulated_dna, left_indices, right_indices, longest_strand, point_pos)
+            angles.append((structure_id, bend_angle))
+            print_colored(f"Measured bend angle for structure {structure_id}: {bend_angle} degrees.", colors['cyan'])
+        
+        # Step 5: Evaluate fitness
+        fitness_scores = evaluate_fitness([angle for _, angle in angles], desired_angle, tolerance)
+        print_colored("Evaluated fitness of mutants.", colors['green'])
+        print_colored(f"Fitness scores: {fitness_scores}", colors['blue'])
+        
+        # Step 6: Select the best mutants based on fitness scores
+        sorted_mutants = sorted(zip(angles, fitness_scores), key=lambda x: x[1])
+        best_mutants = [new_structures[i] for i, (_, _) in enumerate(sorted_mutants[:num_best_structures])]
+        best_angles = [angle for (_, angle), _ in sorted_mutants[:num_best_structures]]
+        print_colored(f"Selected the best {num_best_structures} mutants.", colors['green'])
+        print_colored(f"Best angles: {best_angles}", colors['blue'])
+
+        # Store the removed staples info for the best mutants
+        for i, (structure_id, _) in enumerate(sorted_mutants[:num_best_structures]):
+            removed_staples_dict[structure_id] = removed_strands_info[i]
+        
+        # Check if the best angle is within the desired tolerance
+        if any(abs(angle - desired_angle) <= tolerance for angle in best_angles):
+            print_colored("Desired angle achieved within tolerance.", colors['red'])
+            break
+        
+        # Step 7: Update the current structures with the best mutants for the next iteration
+        current_structures = best_mutants
+        print_colored(f"Updated current structures for iteration {iteration + 1}.", colors['green'])
+        
+        # Step 8: Update left and right indices for each selected structure
+        new_indices = update_indices_for_selected_structures(current_structures, initial_dna_structure, left_indices, right_indices, removed_staples_dict)
+        left_indices, right_indices = new_indices[0]
+    
+    print_colored("Evolutionary algorithm completed.", colors['red'])
