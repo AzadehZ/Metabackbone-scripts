@@ -117,36 +117,15 @@ def run_simulations_for_structure(structure_id, base_path, sim_base_path, rel_pa
     print_colored(f"All simulations for structure {structure_id} completed.\n", colors['cyan'])
     
     
-# Function to create new left and right indices after removing staples
-# def update_indices_for_selected_structures(selected_structures, original_structure, left_indices, right_indices, removed_staples_info):
-#     new_indices = []
-
-#     for structure, removed_strands in zip(selected_structures, removed_staples_info):
-#         new_left_indices = []
-#         new_right_indices = []
-
-#         if isinstance(removed_strands, list) and all(isinstance(rs, list) for rs in removed_strands):
-#             removed_bases_indices = [base.uid for strand in removed_strands for base in strand]
-#         else:
-#             removed_bases_indices = removed_strands
-
-#         max_removed_index = max(removed_bases_indices) if removed_bases_indices else -1
-
-#         for index in left_indices:
-#             if index < max_removed_index:
-#                 new_left_indices.append(index)
-#             else:
-#                 new_left_indices.append(index - len(removed_bases_indices))
-
-#         for index in right_indices:
-#             if index < max_removed_index:
-#                 new_right_indices.append(index)
-#             else:
-#                 new_right_indices.append(index - len(removed_bases_indices))
-
-#         new_indices.append((new_left_indices, new_right_indices))
-
-#     return new_indices
+def stored_removed_strands(dna, removed_strands_info):
+    summaries = []
+    for i, strands in enumerate(removed_strands_info):
+        removed_bases = []
+        for strand in strands:
+            removed_bases.extend([base.uid for base in dna.strands[strand]])
+        summary = f"For structure_{i}, staples with the indexes {', '.join(map(str, strands))} were removed."
+        summaries.append((summary, removed_bases))
+    return summaries
 
 # Function to create new left and right indices after removing staples
 def update_indices_for_selected_structures(selected_structures, original_structure, left_indices, right_indices, removed_staples_info):
@@ -427,3 +406,50 @@ def plot_removed_staples_heatmap(removed_staples_info_all):
     plt.ylabel('Iteration')
     plt.title('Heatmap of Removed Staples Over Iterations')
     plt.show()
+
+
+def partially_remove_staples(dna, point, sphere_radius, num_bases_to_remove=2):
+    bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, sphere_radius)
+    strand_distances = {}
+
+    # Calculate the distance of each strand from the point
+    for strand_index in set(base_to_strand_mapping.values()):
+        strand_bases = [base for base in dna.strands[strand_index]]
+        avg_distance = np.mean([np.linalg.norm(np.array(base.pos) - point) for base in strand_bases])
+        strand_distances[strand_index] = avg_distance
+
+    # Sort strands by distance
+    sorted_strands = sorted(strand_distances.items(), key=lambda x: x[1])
+    
+    # Select the closest strand and partially remove bases
+    if sorted_strands:
+        closest_strand_index = sorted_strands[0][0]
+        closest_strand = dna.strands[closest_strand_index]
+        bases_to_remove = random.sample(closest_strand.bases, min(num_bases_to_remove, len(closest_strand.bases)))
+
+        # Remove the selected bases
+        new_bases = [base for base in closest_strand.bases if base not in bases_to_remove]
+        dna.strands[closest_strand_index].bases = new_bases
+
+        return dna, closest_strand_index, bases_to_remove
+    else:
+        return dna, None, []
+    
+    
+    def introduce_anchor_points(dna, point, anchor_radius, flexibility_reduction_factor):
+    bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, anchor_radius)
+    anchor_strands = set(base_to_strand_mapping.values())
+    
+    # Reduce flexibility of bases within the anchor radius
+    for strand_index in anchor_strands:
+        strand = dna.strands[strand_index]
+        for base in strand.bases:
+            base_position = np.array(base.pos)
+            distance = np.linalg.norm(base_position - point)
+            if distance < anchor_radius:
+                # Reduce flexibility of the base
+                base.flexibility *= flexibility_reduction_factor
+
+    return dna, anchor_strands
+
+

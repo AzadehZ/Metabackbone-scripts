@@ -1,5 +1,5 @@
-           0         0.0000  -1.511604   0.293300  -1.218304 
-INFO: seeding the RNG with 1288621384
+           0         0.0000  -1.506942   0.296146  -1.210796 
+INFO: seeding the RNG with -1507269989
 INFO: Initializing backend 
 INFO: Simulation type: MD
 INFO: CUDA backend precision: mixed
@@ -15,30 +15,30 @@ INFO: Setting the maximum IO limit to 5 MB/s
 INFO: Using CUDA device 0
 INFO: The generator will try to take into account bonded interactions by choosing distances between bonded neighbours no larger than 2.000000
 INFO: Using edge-based approach
-INFO: pid: 23665
+INFO: pid: 41781
 DEBUG: Debye-Huckel parameters: Q=0.054300, lambda_0=0.361646, lambda=0.357493, r_high=1.072479, cutoff=2.571515
 DEBUG: Debye-Huckel parameters: debye_huckel_RC=1.608718e+00, debye_huckel_B=8.766182e-03
 INFO: The Debye length at this temperature and salt concentration is 0.357493
 INFO: (Cells.cpp) N_cells_side: 21, 21, 21; rcut=3.57152, IS_MC: 0
 INFO: N: 4386, N molecules: 67
 INFO: Using randomly distributed velocities
-INFO: Initial kinetic energy: 1286.412860
+INFO: Initial kinetic energy: 1298.894514
 INFO: threads_per_block was not specified or set to 0. The default value (64) will be used
 INFO: CUDA Cells mem: 154.98 MBs, lists mem: 0.02 MBs
 INFO: CUDA max_neigh: 4385, max_N_per_cell: 4386, N_cells: 9261 (per side: 21 21 21)
 INFO: Allocated CUDA memory: 376.04 MBs
 
-INFO: Total Running Time: 0.277979 s, per step: 0.277979 ms
+INFO: Total Running Time: 0.274817 s, per step: 0.274817 ms
 INFO: Timings, in seconds, by Timer (total, own, spent in children)
-> SimBackend                          0.278 (100.0%)        0.005 (  1.8%)        0.273 ( 98.2%)
+> SimBackend                          0.275 (100.0%)        0.005 (  1.8%)        0.270 ( 98.2%)
 ***> Hilbert sorting                  0.001 (  0.4%)        0.001 (  0.4%)        0.000 (  0.0%)
-***> Lists                            0.004 (  1.4%)        0.004 (  1.4%)        0.000 (  0.0%)
-***> Thermostat                       0.002 (  0.5%)        0.002 (  0.5%)        0.000 (  0.0%)
-***> Forces                           0.111 ( 40.1%)        0.111 ( 40.1%)        0.000 (  0.0%)
-***> First Step                       0.025 (  9.1%)        0.025 (  9.1%)        0.000 (  0.0%)
-***> Observables                      0.130 ( 46.6%)        0.130 ( 46.6%)        0.000 (  0.0%)
+***> Lists                            0.004 (  1.5%)        0.004 (  1.5%)        0.000 (  0.0%)
+***> Thermostat                       0.002 (  0.6%)        0.002 (  0.6%)        0.000 (  0.0%)
+***> Forces                           0.107 ( 38.9%)        0.107 ( 38.9%)        0.000 (  0.0%)
+***> First Step                       0.024 (  8.7%)        0.024 (  8.7%)        0.000 (  0.0%)
+***> Observables                      0.132 ( 48.1%)        0.132 ( 48.1%)        0.000 (  0.0%)
 
 
 Please cite at least the following publication for any work that uses the oxDNA simulation package
   * E. Poppleton et al., J. Open Source Softw. 8, 4693 (2023), DOI: 10.21105/joss.04693
-Run time: 0.5462053160008509
+Run time: 0.5361083360003249
