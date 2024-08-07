@@ -437,19 +437,19 @@ def partially_remove_staples(dna, point, sphere_radius, num_bases_to_remove=2):
     
     
     def introduce_anchor_points(dna, point, anchor_radius, flexibility_reduction_factor):
-    bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, anchor_radius)
-    anchor_strands = set(base_to_strand_mapping.values())
+        bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, anchor_radius)
+        anchor_strands = set(base_to_strand_mapping.values())
     
-    # Reduce flexibility of bases within the anchor radius
-    for strand_index in anchor_strands:
-        strand = dna.strands[strand_index]
-        for base in strand.bases:
-            base_position = np.array(base.pos)
-            distance = np.linalg.norm(base_position - point)
-            if distance < anchor_radius:
-                # Reduce flexibility of the base
-                base.flexibility *= flexibility_reduction_factor
+        # Reduce flexibility of bases within the anchor radius
+        for strand_index in anchor_strands:
+            strand = dna.strands[strand_index]
+            for base in strand.bases:
+                base_position = np.array(base.pos)
+                distance = np.linalg.norm(base_position - point)
+                if distance < anchor_radius:
+                    # Reduce flexibility of the base
+                    base.flexibility *= flexibility_reduction_factor
 
-    return dna, anchor_strands
+        return dna, anchor_strands
 
 
