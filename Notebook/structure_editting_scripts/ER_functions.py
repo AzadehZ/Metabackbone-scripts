@@ -159,6 +159,12 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
     current_structures = [initial_dna_structure]
     removed_staples_dict = {}  # Dictionary to store removed staples info
     
+    fitness_history = []
+    fitness_scores_all_iterations = []
+    angle_history = []
+    angles_all_iterations = []
+    removed_staples_info_all_iterations = []
+
     for iteration in range(num_iterations):
         print_colored(f"Iteration {iteration + 1}", colors['yellow'])
         
@@ -186,8 +192,7 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
         # Step 3: Export new DNA structures
         print_colored("Step 3: Exporting DNA structures...", colors['magenta'])
         export_paths = export_dna_structures(new_structures, base_path)
-        # print_colored("Exported DNA structures.", colors['yellow'])
-        print_colored(f"Export paths: {export_paths}", colors['red'])
+        print_colored(f"Export paths: {export_paths}", colors['yellow'])
         
         # Step 4: Simulate each modified structure
         print_colored("Step 4: Simulating each modified structure...", colors['green'])
@@ -195,7 +200,6 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
             structure_id = export_path['structure_id']
             print_colored(f"Starting simulations for structure {structure_id}...", colors['red'])
             run_simulations_for_structure(structure_id, base_path, sim_base_path, rel_parameters, eq_parameters, prod_parameters)
-            # print_colored(f"Simulations for structure {structure_id} completed.", colors['blue'])
         
         # Step 5: Measure the angle at the joint for each mutant after simulation
         print_colored("Step 5: Measuring the angle at the joint for each mutant after simulation...", colors['cyan'])
@@ -203,6 +207,7 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
         for export_path in export_paths:
             structure_id = export_path['structure_id']
             simulated_dna = load_simulated_structure(structure_id, sim_base_path)
+            
             bend_angle = find_bend_angle(simulated_dna, left_indices, right_indices, longest_strand, point_pos)
             angles.append((structure_id, bend_angle))
             print_colored(f"Measured bend angle for structure {structure_id}: {bend_angle} degrees.", colors['magenta'])
@@ -210,7 +215,6 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
         # Step 6: Evaluate fitness
         print_colored("Step 6: Evaluating fitness of mutants...", colors['yellow'])
         fitness_scores = evaluate_fitness([angle for _, angle in angles], desired_angle, tolerance)
-        # print_colored("Evaluated fitness of mutants.", colors['red'])
         print_colored(f"Fitness scores: {fitness_scores}", colors['green'])
         
         # Step 7: Select the best mutants based on fitness scores
@@ -219,18 +223,21 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
         
         # Display results for all structures
         print_colored("Results for all structures:", colors['cyan'])
+        sorted_mutants = sorted(zip(angles, fitness_scores), key=lambda x: x[1])  # Ensure mutants are sorted by fitness score
+
         for (structure_id, angle), fitness_score in sorted_mutants:
             print_colored(f"Structure ID: {structure_id}, Bend Angle: {angle}, Fitness Score: {fitness_score}", colors['magenta'])
 
         # Select the best mutants
-        best_mutants = [new_structures[i] for i, (_, _) in enumerate(sorted_mutants[:num_best_structures])]
-        best_angles = [angle for (_, angle), _ in sorted_mutants[:num_best_structures]]
-        best_removed_strands_info = [removed_strands_info_all[i] for i, (_, _) in enumerate(sorted_mutants[:num_best_structures])]
-        
+        best_mutants_info = sorted_mutants[:num_best_structures]  # Select top structures
+        best_mutants = [new_structures[angles.index((structure_id, angle))] for (structure_id, angle), _ in best_mutants_info]
+        best_angles = [angle for (_, angle), _ in best_mutants_info]
+        best_removed_strands_info = [removed_strands_info_all[angles.index((structure_id, angle))] for (structure_id, angle), _ in best_mutants_info]
+
         # Display results for the selected best structures
         print_colored(f"Selected the best {num_best_structures} mutants:", colors['yellow'])
-        for i, (angle, fitness_score) in enumerate(zip(best_angles, [fs for _, fs in sorted_mutants[:num_best_structures]])):
-            print_colored(f"Selected Structure {i}: Bend Angle: {angle}, Fitness Score: {fitness_score}", colors['red'])
+        for i, ((structure_id, angle), fitness_score) in enumerate(best_mutants_info):
+            print_colored(f"Selected Structure {i}: Structure ID: {structure_id}, Bend Angle: {angle}, Fitness Score: {fitness_score}", colors['red'])
 
         # Step 8: Store the removed staples info for the best mutants
         print_colored("Step 8: Storing the removed staples info for the best mutants...", colors['green'])
@@ -240,6 +247,13 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
             print_colored(f"Structure ID: {structure_id} - {summary}", colors['blue'])
             print_colored(f"Removed bases: {removed_bases}", colors['cyan'])
         
+        # Update fitness and angle history for plotting
+        fitness_history.append(min(fitness_scores))
+        fitness_scores_all_iterations.append(fitness_scores)
+        angle_history.append(min([angle for _, angle in angles]))
+        angles_all_iterations.append([angle for _, angle in angles])
+        removed_staples_info_all_iterations.append([info for info in removed_strands_info_all])
+        
         # Check if the best angle is within the desired tolerance
         if any(abs(angle - desired_angle) <= tolerance for angle in best_angles):
             print_colored("Desired angle achieved within tolerance. Stopping evolution process.", colors['magenta'])
@@ -248,14 +262,33 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
         # Step 9: Update the current structures with the best mutants for the next iteration
         print_colored("Step 9: Updating the current structures with the best mutants for the next iteration...", colors['yellow'])
         current_structures = best_mutants
-        print_colored(f"Updated current structures for iteration {iteration + 1}.", colors['red'])
+        print_colored(f"Updated current structures for iteration {iteration + 1}:", colors['red'])
+        for i, structure in enumerate(current_structures):
+            print_colored(f"Structure {i}: {structure}", colors['blue'])
+            
         
         # Step 10: Update left and right indices for each selected structure
         print_colored("Step 10: Updating left and right indices for each selected structure...", colors['green'])
         new_indices_list = update_indices_for_selected_structures(current_structures, initial_dna_structure, left_indices, right_indices, best_removed_strands_info)
         left_indices, right_indices = new_indices_list[0]
+        print_colored(f"Updated left indices: {left_indices}", colors['cyan'])
+        print_colored(f"Updated right indices: {right_indices}", colors['cyan'])
     
     print_colored("Evolutionary algorithm completed.", colors['red'])
+    
+    # Plotting results
+    plot_fitness_scores_line(fitness_history)
+    plot_fitness_scores_box(fitness_scores_all_iterations)
+    plot_bend_angles_line(angle_history, desired_angle)
+    plot_bend_angles_scatter(angles_all_iterations, angle_history)
+    plot_fitness_vs_bend_angle(
+        [angle for angles in angles_all_iterations for angle in angles],
+        [fitness for fitness_scores in fitness_scores_all_iterations for fitness in fitness_scores],
+        angle_history,
+        fitness_history
+    )
+
+    plot_removed_staples_heatmap(removed_staples_info_all_iterations)
     
     
 def find_symmetric_strands(dna, point, sphere_radius, num_strands=3):
