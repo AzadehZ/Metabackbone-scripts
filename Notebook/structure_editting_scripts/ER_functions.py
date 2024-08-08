@@ -114,7 +114,7 @@ def run_simulations_for_structure(structure_id, base_path, sim_base_path, rel_pa
     simulation_manager.queue_sim(sim_prod)
     simulation_manager.worker_manager(gpu_mem_block=False)
     print_colored(f"Production simulation for structure {structure_id} completed.", colors['green'])
-    print_colored(f"All simulations for structure {structure_id} completed.\n", colors['cyan'])
+    print_colored(f"All simulations for mutant {structure_id} completed.\n", colors['cyan'])
     
     
 def stored_removed_strands(dna, removed_strands_info):

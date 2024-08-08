@@ -1,6 +1,6 @@
-           0  -0.627895   0.000  0.000  0.000  
-         100  -1.522680   0.059  0.599  0.000  
-INFO: seeding the RNG with -1652307423
+           0  -0.624342   0.000  0.000  0.000  
+         100  -1.519975   0.058  0.598  0.000  
+INFO: seeding the RNG with 2014920384
 INFO: Initializing backend 
 
 WARNING: The 'backend_precision' option cannot be set by input file when running on CPU
@@ -16,21 +16,21 @@ DEBUG: Debye-Huckel parameters: Q=0.054300, lambda_0=0.361646, lambda=0.363539, 
 DEBUG: Debye-Huckel parameters: debye_huckel_RC=1.635926e+00, debye_huckel_B=8.336024e-03
 INFO: The Debye length at this temperature and salt concentration is 0.363539
 INFO: Setting the maximum IO limit to 5 MB/s
-INFO: pid: 80063
+INFO: pid: 210823
 DEBUG: Debye-Huckel parameters: Q=0.054300, lambda_0=0.361646, lambda=0.363539, r_high=1.090618, cutoff=2.598724
 DEBUG: Debye-Huckel parameters: debye_huckel_RC=1.635926e+00, debye_huckel_B=8.336024e-03
 INFO: The Debye length at this temperature and salt concentration is 0.363539
 INFO: (Cells.cpp) N_cells_side: 21, 21, 21; rcut=3.59872, IS_MC: 1
-INFO: N: 4400, N molecules: 67
+INFO: N: 4393, N molecules: 67
 
-INFO: Total Running Time: 4.13248 s, per step: 41.3248 ms
+INFO: Total Running Time: 4.70523 s, per step: 47.0523 ms
 INFO: Timings, in seconds, by Timer (total, own, spent in children)
-> SimBackend                          4.132 (100.0%)        0.295 (  7.2%)        3.837 ( 92.8%)
-***> Rotations+Translations           3.642 ( 88.1%)        3.642 ( 88.1%)        0.000 (  0.0%)
-***> Observables                      0.195 (  4.7%)        0.195 (  4.7%)        0.000 (  0.0%)
-> Lists                               0.042 (  1.0%)        0.042 (  1.0%)        0.000 (  0.0%)
+> SimBackend                          4.705 (100.0%)        0.310 (  6.6%)        4.395 ( 93.4%)
+***> Rotations+Translations           4.177 ( 88.8%)        4.177 ( 88.8%)        0.000 (  0.0%)
+***> Observables                      0.218 (  4.6%)        0.218 (  4.6%)        0.000 (  0.0%)
+> Lists                               0.000 (  0.0%)        0.000 (  0.0%)        0.000 (  0.0%)
 
 
 Please cite at least the following publication for any work that uses the oxDNA simulation package
   * E. Poppleton et al., J. Open Source Softw. 8, 4693 (2023), DOI: 10.21105/joss.04693
-Run time: 4.454984878990217
+Run time: 5.068357184994966
