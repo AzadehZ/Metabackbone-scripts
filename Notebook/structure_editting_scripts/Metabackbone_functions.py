@@ -326,23 +326,33 @@ def remove_one_strand_below_point_in_sphere(dna, point, sphere_radius, min_dista
 
 # Removing one strand in sphere
 def remove_one_strand_in_sphere(dna, point, sphere_radius):
+    
     bases_in_sphere, base_to_strand_mapping = find_bases_in_sphere(dna, point, sphere_radius)
     longest_strand, longest_strand_index = find_longest_strand(dna)
     strands_to_remove = set(base_to_strand_mapping.values()) - {longest_strand_index}
     strands_in_sphere = list(set(base_to_strand_mapping.values()))
+    
     print("Strand indices in the sphere:", strands_in_sphere)
     print("Strand indices to be removed:", list(strands_to_remove))
+    
     dna_structures = []
+    removed_strands = []  # To store the strands that were removed
+
     for strand_index in strands_to_remove:
         print(f"Removing strand index: {strand_index}")
         strand_list = []
         for idx, strand in enumerate(dna.strands):
             if idx != strand_index:
                 strand_list.append(strand)
+            else:
+                removed_strands.append(strand_index)  # Log the removed strand
+        
         new_dna_structure = DNAStructure(strand_list, dna.time, dna.box, dna.energy)
         dna_structures.append(new_dna_structure)
+    
     print(f"Total number of new structures created: {len(dna_structures)}")
-    return dna_structures
+    return dna_structures, removed_strands
+
 
 # Removing two strands above point in sphere
 def remove_two_strands_above_point_in_sphere(dna, point, sphere_radius, min_distance=0):

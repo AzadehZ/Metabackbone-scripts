@@ -127,32 +127,54 @@ def stored_removed_strands(dna, removed_strands_info):
         summaries.append((summary, removed_bases))
     return summaries
 
-# Function to create new left and right indices after removing staples
-def update_indices_for_selected_structures(selected_structures, original_structure, left_indices, right_indices, removed_staples_info):
-    new_indices = []
-
-    for structure, removed_strands in zip(selected_structures, removed_staples_info):
+def update_right_left_indexes(mutants, removed_strands, left_indices, right_indices):
+    updated_left_indices = []
+    updated_right_indices = []
+    for i, mutant in enumerate(mutants):
+        removed_strand_index = removed_strands[i]
+        removed_bases_indices = [base.uid for base in mutant.strands[removed_strand_index]]
+        max_removed_index = max(removed_bases_indices)
+        print('max_removed_index:', max_removed_index)
+        
         new_left_indices = []
+        for idx in left_indices:
+            if idx < max_removed_index:
+                new_left_indices.append(idx)
+            else:
+                new_left_indices.append(idx - len(removed_bases_indices))
+        print(f"Updated left indices for mutant {i+1}: {new_left_indices}")        
+        
         new_right_indices = []
-
-        removed_bases_indices = [base.uid for strand in removed_strands for base in original_structure.strands[strand]]
-        max_removed_index = max(removed_bases_indices) if removed_bases_indices else -1
-
-        for index in left_indices:
-            if index < max_removed_index:
-                new_left_indices.append(index)
+        for idx in right_indices:
+            if idx < max_removed_index:
+                new_right_indices.append(idx)
             else:
-                new_left_indices.append(index - len(removed_bases_indices))
+                new_right_indices.append(idx - len(removed_bases_indices))        
+        print(f"Updated right indices for mutant {i+1}: {new_right_indices}")
+        
+        updated_left_indices.append(new_left_indices)
+        updated_right_indices.append(new_right_indices)
+        
+    return updated_left_indices, updated_right_indices, removed_strands 
 
-        for index in right_indices:
-            if index < max_removed_index:
-                new_right_indices.append(index)
-            else:
-                new_right_indices.append(index - len(removed_bases_indices))
-
-        new_indices.append((new_left_indices, new_right_indices))
-
-    return new_indices
+def get_removed_strands_by_index(dna: DNAStructure, removed_strands_info: list[int]) -> list[DNAStructureStrand]:
+    """
+    Parameters:
+        dna (DNAStructure): The DNA structure object from which strands were removed.
+        removed_strands_info (list[int]): A list of strand indices that were removed.
+    
+    Returns:
+        list[DNAStructureStrand]: A list of DNAStructureStrand objects corresponding to the removed strands.
+    """
+    removed_strands = []
+    
+    for strand_index in removed_strands_info:
+        if 0 <= strand_index < dna.get_num_strands():
+            removed_strands.append(dna.get_strand(strand_index))
+        else:
+            print(f"Warning: Invalid strand index {strand_index}. Skipping.")
+    
+    return removed_strands
 
 
 def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, num_iterations, num_best_structures, desired_angle, tolerance, base_path, sim_base_path, sphere_radius):
