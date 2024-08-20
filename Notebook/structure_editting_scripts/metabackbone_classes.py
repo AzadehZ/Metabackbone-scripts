@@ -28,16 +28,15 @@ class StructureEvolution:
 
     Attributes:
         current_structures (list[DNAStructure]): The list of current DNA structures being evolved.
-        current_left_indices (list[list[int]]): List of left indices for each structure's bases.
-        current_right_indices (list[list[int]]): List of right indices for each structure's bases.
+        current_left_indices (list[list[int]]): List of left indices for each structure.
+        current_right_indices (list[list[int]]): List of right indices for each structure.
         num_iterations (int): Number of iterations for the evolutionary algorithm.
         num_best_structures (int): Number of best structures to keep in each iteration.
         desired_angle (float): The target bend angle desired in the evolved DNA structures.
         tolerance (float): The acceptable tolerance for the bend angle.
-        base_path (str): Base path where DNA structures are saved.
+        base_path (str): Base path where the modified DNA structures are saved.
         sim_base_path (str): Base path where simulation results are stored.
         sphere_radius (float): Radius of the sphere used to find and remove strands.
-    """
     
     Methods:
         run(): Executes the evolutionary algorithm over the specified number of iterations.
