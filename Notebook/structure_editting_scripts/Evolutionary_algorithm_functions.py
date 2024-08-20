@@ -207,7 +207,7 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
     removed_staples_info_all_iterations = []
 
     for iteration in range(num_iterations):
-        print_colored(f"Iteration {iteration + 1}", colors['red'])
+        print_colored(f"\nStep 1: Iteration {iteration + 1}\n", colors['red'])
         
         new_structures = []
         new_left_indices = []
@@ -216,71 +216,83 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
         structure_origin = []  # To keep track of which structure each mutant came from
         
         for i, dna in enumerate(current_structures):
-            print_colored(f"Processing structure {i} in iteration {iteration + 1}", colors['yellow'])
+            print_colored(f"Step 2: Processing structure {i} in iteration {iteration + 1}\n", colors['yellow'])
 
             # Step 2: Find the longest strand in the DNA structure
             longest_strand, longest_strand_index = find_longest_strand(dna)
+            print_colored(f'Step 3: Longest strand: {longest_strand}', colors['cyan'])
+            print_colored(f'Longest strand index: {longest_strand_index}\n', colors['cyan'])
 
             # Step 3: Find a valid point on the structure
             point_pos = find_valid_point(dna, current_left_indices[i], current_right_indices[i], longest_strand)
-            print_colored(f'Found a valid point in the DNA structure: {point_pos}', colors['blue'])
+            print_colored(f'Step 4: Found a valid point in the DNA structure: {point_pos}\n', colors['blue'])
 
             # Step 4: Define a sphere centered at the valid point
             # The sphere is conceptually defined here as the area around `point_pos` within `sphere_radius`
+            print_colored(f'Step 5: Defined a sphere around the valid point with radius {sphere_radius}\n', colors['magenta'])
         
             # Step 5: Find the strands within that sphere, excluding the longest strand
-            strands_in_sphere = find_strands_in_sphere(dna, point_pos, sphere_radius, exclude_strand=longest_strand)
+            strands_in_sphere = find_strands_in_sphere(dna, point_pos, sphere_radius, exclude_strand = longest_strand_index)
+            print_colored(f'Step 6: Number of strands found in the sphere: {len(strands_in_sphere)}\n', colors['green'])
         
             # Step 6: Remove one random staple from the staples within the sphere
             mutants, removed_strands = remove_one_strand_in_sphere(dna, point_pos, sphere_radius)
             removed_strands_info_all.extend(removed_strands)  # Log the strands removed within the sphere
+            print_colored(f'Step 7: Removed strands within the sphere. Number of mutants generated: {len(mutants)}\n', colors['red'])
 
             # Step 7: Generate mutant structures
             new_structures.extend(mutants)
             structure_origin.extend([i] * len(mutants))  # Keep track of the origin
-            print_colored(f"By modifying structure {i}, {len(mutants)} mutant structures were produced.", colors['magenta'])
+            print_colored(f"Step 8: By modifying structure {i}, {len(mutants)} mutant structures were produced.\n", colors['magenta'])
 
             # Step 8: Update the left and right indices for each mutant structure
-            print_colored("Updating left and right indices for each mutant...", colors['green'])
+            print_colored("Step 9: Updating left and right indices for each mutant...", colors['green'])
             updated_left_indices, updated_right_indices, removed_staples_info = update_right_left_indexes(mutants, removed_strands_info_all, current_left_indices[i], current_right_indices[i])
 
             # Store the updated indices
             new_left_indices.extend(updated_left_indices)
             new_right_indices.extend(updated_right_indices)
+            print_colored(f'Step 10: Updated left indices: {updated_left_indices}', colors['cyan'])
+            print_colored(f'Updated right indices: {updated_right_indices}\n', colors['cyan'])
 
-            # Print the outputs for each mutant
-            # for j, (left_idx, right_idx) in enumerate(zip(updated_left_indices, updated_right_indices)):
-            #     print(f"Mutant {j + 1}: Updated Left Indices: {left_idx}")
-            #     print(f"Mutant {j + 1}: Updated Right Indices: {right_idx}")
-
-        # Export new DNA structures
+        # Step 9: Export new DNA structures
+        print_colored(f"Step 11: Exporting DNA structures...", colors['yellow'])
         export_paths = export_dna_structures(new_structures, base_path)
+        print_colored(f"Exported DNA structures: {export_paths}\n", colors['yellow'])
     
+        # Step 10: Simulate each modified structure
         for export_path in export_paths:
             structure_id = export_path['structure_id']
-            print_colored(f"Starting simulations for structure {structure_id}...", colors['red'])
+            print_colored(f"Step 12: Starting simulations for structure {structure_id}...", colors['red'])
             run_simulations_for_structure(structure_id, base_path, sim_base_path, rel_parameters, eq_parameters, prod_parameters)
+            print_colored(f"Simulation completed for structure {structure_id}\n", colors['red'])
             
-        # Measure the angle at the joint for each mutant after simulation
+        # Step 11: Measure the angle at the joint for each mutant after simulation
         angles = []
         for export_path in export_paths:
             structure_id = export_path['structure_id']
             simulated_dna = load_simulated_structure(structure_id, sim_base_path)
             bend_angle = find_bend_angle(simulated_dna, left_indices, right_indices, longest_strand, point_pos)
             angles.append((structure_id, bend_angle))
+            print_colored(f'Step 13: Structure {structure_id} - Bend Angle: {bend_angle}\n', colors['blue'])
         
-        # Evaluate fitness
+        # Step 12: Evaluate fitness
+        print_colored(f"Step 14: Evaluating fitness for each structure...", colors['green'])
         fitness_scores = evaluate_fitness([angle for _, angle in angles], desired_angle, tolerance)
+        print_colored(f'Fitness scores: {fitness_scores}\n', colors['green'])
         
-        # Select the best mutants based on fitness scores
+        # Step 13: Select the best mutants based on fitness scores
+        print_colored(f"Step 15: Selecting the best mutants based on fitness scores...", colors['magenta'])
         sorted_mutants = sorted(zip(angles, fitness_scores, new_structures, new_left_indices, new_right_indices), key=lambda x: x[1])
-        
-        # Select the best mutant and get its unsimulated version for the next iteration
         best_mutant = sorted_mutants[0]
         best_structure_id_angle, best_fitness_score, best_unsimulated_structure, best_left_index, best_right_index = best_mutant
+        best_angle = best_structure_id_angle[1]
+        best_structure_id = best_structure_id_angle[0]
+        print_colored(f'Best mutant structure ID: {best_structure_id} with angle: {best_angle} and fitness score: {best_fitness_score}\n', colors['magenta'])
         
+        # Check if the best mutant achieves the desired angle within tolerance
         if abs(best_angle - desired_angle) <= tolerance:
-            print_colored(f"Best mutant structure ID {best_structure_id} has achieved the desired angle within tolerance.", colors['green'])
+            print_colored(f"Step 16: Best mutant structure ID {best_structure_id} has achieved the desired angle within tolerance.\n", colors['green'])
         
         # Update the current structures and indices for the next iteration
         current_structures = [best_unsimulated_structure]
@@ -291,10 +303,16 @@ def evolutionary_algorithm(initial_dna_structure, left_indices, right_indices, n
         fitness_history.append(fitness_scores)
         angle_history.append([angle for _, angle in angles])
         
-        # Plot histogram for this iteration
+        # Step 14: Plot histogram for this iteration
+        print_colored(f"Step 17: Plotting histograms and evolution graphs...", colors['blue'])
         plot_histogram([angle for _, angle in angles], desired_angle, iteration)
+        plot_angle_evolution(angle_history, desired_angle)
+        plot_best_vs_desired_angle(angle_history, desired_angle)
+        print_colored(f"Iteration {iteration + 1} completed.\n", colors['yellow'])
         
     return fitness_history, angle_history
+
+
 
     
   
