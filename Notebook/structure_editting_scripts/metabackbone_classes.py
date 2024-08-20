@@ -26,18 +26,27 @@ class StructureEvolution:
     It handles the entire workflow, including making changes to the structures, running simulations, 
     and evaluating how well the structures meet the desired goals over several rounds.
 
+    Note on Method Naming Conventions:
+    - Public methods (without a leading underscore) are intended to be used directly by users of the class. 
+      These methods form the main interface for interacting with the class.
+    - Private methods (with a leading underscore, e.g., _select_best_mutant) are intended for internal use 
+      within the class. These methods are not meant to be called directly by users, as they handle specific 
+      internal tasks that support the overall functioning of the class. Using an underscore helps signal 
+      to other developers that these methods are implementation details and should not be used or relied 
+      upon outside of the class's intended interface.
+
     Attributes:
         current_structures (list[DNAStructure]): The list of current DNA structures being evolved.
-        current_left_indices (list[list[int]]): List of left indices for each structure.
-        current_right_indices (list[list[int]]): List of right indices for each structure.
+        current_left_indices (list[list[int]]): List of left indices for each structure's bases.
+        current_right_indices (list[list[int]]): List of right indices for each structure's bases.
         num_iterations (int): Number of iterations for the evolutionary algorithm.
         num_best_structures (int): Number of best structures to keep in each iteration.
         desired_angle (float): The target bend angle desired in the evolved DNA structures.
         tolerance (float): The acceptable tolerance for the bend angle.
-        base_path (str): Base path where the modified DNA structures are saved.
+        base_path (str): Base path where DNA structures are saved.
         sim_base_path (str): Base path where simulation results are stored.
         sphere_radius (float): Radius of the sphere used to find and remove strands.
-    
+
     Methods:
         run(): Executes the evolutionary algorithm over the specified number of iterations.
         _iterate_evolution(iteration): Performs one iteration of the evolutionary process.
@@ -60,7 +69,7 @@ class StructureEvolution:
         self.base_path = base_path
         self.sim_base_path = sim_base_path
         self.sphere_radius = sphere_radius
-        self.removed_staples_dict = {}  # Dictionary to store removed staples info
+        self.removed_staples_dict = {}  
         self.fitness_history = []
         self.angle_history = []
 

@@ -5,7 +5,6 @@ import logging
 from itertools import combinations
 from typing import Dict, Tuple, List
 
-# Import custom functions from Metabackbone_functions and ER_functions modules
 from Metabackbone_functions import (
     load_dna_structure_files, find_longest_strand, find_cross_over_in_longest_strand,
     calculate_left_right_pos, find_valid_point, find_bases_around_point,
