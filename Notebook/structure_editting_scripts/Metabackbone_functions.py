@@ -12,18 +12,11 @@ import copy
 from tqdm.auto import tqdm
 import random
 
+
+colors = {'blue': '34', 'green': '32', 'yellow': '33', 'cyan': '36', 'red': '31', 'magenta': '35'}
+
 def print_colored(message, color_code):
     print(f"\033[{color_code}m{message}\033[0m")
-
-# ANSI color codes
-colors = {
-    'blue': '34',
-    'green': '32',
-    'yellow': '33',
-    'cyan': '36',
-    'red': '31'
-}
-
 
 # Loading DNA structure files
 def load_dna_structure_files(input_path):
