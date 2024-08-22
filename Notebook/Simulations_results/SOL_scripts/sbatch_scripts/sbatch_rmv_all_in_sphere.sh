@@ -14,7 +14,7 @@
  
 #Load required modules for job's environment
 module load mamba/latest
-module load cuda-11.7.0-gcc-12.3.0
+module load cuda-11.8.0-gcc-11.2.0-66
 source activate oxdnapy12
 export CUDA_MPS_PIPE_DIRECTORY=/tmp/mps-pipe_$SLURM_TASK_PID
 export CUDA_MPS_LOG_DIRECTORY=/tmp/mps-log_$SLURM_TASK_PID
